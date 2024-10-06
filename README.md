@@ -1,6 +1,6 @@
 # Autofullscreen
 
-**Autofullscreen** is a lightweight Linux application built in Rust that automatically launches applications and keeps them in fullscreen mode. It is desktop environment-agnostic, making it ideal for single-use VMs and ensuring a seamless, distraction-free experience.
+**WIP**
 
 ## Dependencies
 
