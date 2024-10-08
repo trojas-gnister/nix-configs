@@ -50,13 +50,7 @@ sudo emerge wmctrl flatpak
 
 1. Install system dependencies like `wmctrl` and `flatpak`.
 2. Ensure your Rust environment is set up.
-3. Build the project using Cargo:
-
-```bash
-cargo build --release
-```
-
-4. Run the application:
+3. Run the application:
 
 ```bash
 cargo run
