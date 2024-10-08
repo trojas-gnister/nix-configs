@@ -6,40 +6,58 @@
 
 Before installing **Autofullscreen**, ensure that the following dependencies are installed on your system:
 
+### System Dependencies
+
 - [`wmctrl`](http://tripie.sweb.cz/utilities/wmctrl/) – A command-line tool to interact with an X Window Manager.
+- [`flatpak`](https://flatpak.org/) – A software utility for package management to handle and run Flatpak applications.
 
-### Install Dependencies
+#### Install System Dependencies
 
-**wmctrl** is required for **Autofullscreen** to manage window states. Install it using your distribution’s package manager.
+**wmctrl** and **flatpak** are required for **Autofullscreen** to manage window states and interact with Flatpak applications. Install them using your distribution’s package manager.
 
-#### **Ubuntu/Debian**
+##### **Ubuntu/Debian**
 
 ```bash
 sudo apt update
-sudo apt install wmctrl
+sudo apt install wmctrl flatpak
 ```
 
-#### **Fedora**
+##### **Fedora**
 
 ```bash
-sudo dnf install wmctrl
+sudo dnf install wmctrl flatpak
 ```
 
-#### **Arch Linux**
+##### **Arch Linux**
 
 ```bash
-sudo pacman -S wmctrl
+sudo pacman -S wmctrl flatpak
 ```
 
-#### **openSUSE**
+##### **openSUSE**
 
 ```bash
-sudo zypper install wmctrl
+sudo zypper install wmctrl flatpak
 ```
 
-#### **Gentoo**
+##### **Gentoo**
 
 ```bash
-sudo emerge wmctrl
+sudo emerge wmctrl flatpak
 ```
 
+## Installation and Usage
+
+1. Install system dependencies like `wmctrl` and `flatpak`.
+2. Ensure your Rust environment is set up.
+3. Build the project using Cargo:
+
+```bash
+cargo build --release
+```
+
+4. Run the application:
+
+```bash
+cargo run
+```

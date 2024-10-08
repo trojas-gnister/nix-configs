@@ -20,7 +20,6 @@ fn main() {
 
     let output_str = str::from_utf8(&command_output.stdout).expect("Invalid utf8");
 
-    //TODO: need to test if this is formatting correctly
     let mut apps: Vec<FlatpakApp> = Vec::new();
 
     for line in output_str.lines().skip(1) {
@@ -42,8 +41,14 @@ fn main() {
             });
         }
     }
-    //TODO: allow user to select an app from the apps vec! using inquire
 
+    let app_options: Vec<String> = apps
+        .iter()
+        .map(|app| format!("{} (ID: {})", app.name, app.application_id))
+        .collect();
+    let selected_app = Select::new("Select a Flatpak application to run:", app_options).prompt();
+
+    println!("{:?}", selected_app.unwrap());
     // TODO: Launch app selected by the user
     // Command::new("flatpak")
     //     .arg("run")
