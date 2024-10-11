@@ -1,17 +1,12 @@
 use inquire::Select;
 use regex::Regex;
-use serde::Serialize;
 use std::process::Command;
 use std::str;
 
 fn main() {
-    #[derive(Serialize, Debug)]
     struct FlatpakApp {
         name: String,
         application_id: String,
-        version: String,
-        branch: String,
-        installation: String,
     }
 
     let command_output = Command::new("flatpak")
@@ -29,16 +24,10 @@ fn main() {
         if fields.len() >= 5 {
             let name = fields[0..fields.len() - 4].join("");
             let application_id = fields[fields.len() - 4].to_string();
-            let version = fields[fields.len() - 3].to_string();
-            let branch = fields[fields.len() - 2].to_string();
-            let installation = fields[fields.len() - 1].to_string();
 
             apps.push(FlatpakApp {
                 name,
                 application_id,
-                version,
-                branch,
-                installation,
             });
         }
     }
@@ -51,7 +40,7 @@ fn main() {
         .prompt()
         .unwrap();
     let flatpak_regex = Regex::new(r"\b(\w+\.\w+\.\w+\.\w+)\b").unwrap();
-
+    //TODO: identify why librewolf isn't launching but ungoogled chromium is
     if let Some(captures) = flatpak_regex.captures(&selected_app) {
         if let Some(matched) = captures.get(0) {
             Command::new("flatpak")
@@ -63,13 +52,6 @@ fn main() {
             println!("There was an issue with the app selection");
         }
     }
-
-    // TODO: Launch app selected by the user
-    // Command::new("flatpak")
-    //     .arg("run")
-    //     .arg(application)
-    //     .spawn()
-    //     .expect("Failed to launch application");
 
     //TODO: grab wmctrl -l then check the id that has a name similar to the application selected
     //Command::new("wmctrl")
