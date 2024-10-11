@@ -53,8 +53,12 @@ fn main() {
     }
 
     //TODO: grab wmctrl -l then check the id that has a name similar to the application selected
-    //Command::new("wmctrl")
-    //    .args(["-r", application, "-b", "add,fullscreen"])
-    //.output()
-    //.expect("Failed to set the window to fullscreen");
+    //TODO: need to grab PID then use PID to find application id using
+    //gduus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/Windows --method org.gnome.Shell.Extensions.Windows.List
+    //TODO: ask the user if they would like to install Extensions.Windows from gnome extension store
+    //EXIT IF THEY DONT
+    // TODO: USE GNOME MAXIMIZE CLI TO MAXIMIZE WINDOW
+    //TODO: CREATE LOOP TO MAKE SURE APP IS ALWAYS FULL SCREEN
+    //TODO: UPDATE README TO MENTION GNOME AND GNOME EXTENSION DEPDENDENCY
 }
+
