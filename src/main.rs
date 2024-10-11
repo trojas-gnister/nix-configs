@@ -1,4 +1,5 @@
 use inquire::Select;
+use regex::Regex;
 use serde::Serialize;
 use std::process::Command;
 use std::str;
@@ -46,9 +47,23 @@ fn main() {
         .iter()
         .map(|app| format!("{} (ID: {})", app.name, app.application_id))
         .collect();
-    let selected_app = Select::new("Select a Flatpak application to run:", app_options).prompt();
+    let selected_app = Select::new("Select a Flatpak application to run:", app_options)
+        .prompt()
+        .unwrap();
+    let flatpak_regex = Regex::new(r"\b(\w+\.\w+\.\w+\.\w+)\b").unwrap();
 
-    println!("{:?}", selected_app.unwrap());
+    if let Some(captures) = flatpak_regex.captures(&selected_app) {
+        if let Some(matched) = captures.get(0) {
+            Command::new("flatpak")
+                .arg("run")
+                .arg(matched.as_str())
+                .spawn()
+                .expect_err("Error: ");
+        } else {
+            println!("There was an issue with the app selection");
+        }
+    }
+
     // TODO: Launch app selected by the user
     // Command::new("flatpak")
     //     .arg("run")
