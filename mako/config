@@ -1,0 +1,11 @@
+background-color=#00000080  
+border-color=#ffffff40      
+text-color=#ffffff         
+font=Sans 14
+default-timeout=5000
+width=350                  
+height=100                
+padding=10
+margin=10
+border-size=2
+corner-radius=8             
