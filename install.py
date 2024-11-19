@@ -9,6 +9,25 @@ import urllib.request
 import pwd
 import grp
 
+# Define the list of configurations
+configs = [
+    {
+        'name': 'librewolf-i3',
+        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/configuration.nix',
+        'i3_config_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/.config/i3/config'
+    },
+    {
+        'name': 'chromium-i3',
+        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/chromium-i3/configuration.nix',
+        'i3_config_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/chromium-i3/.config/i3/config'
+    },
+    {
+        'name': 'torrent-i3',
+        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/torrent-i3/configuration.nix',
+        'i3_config_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/torrent-i3/.config/i3/config'
+    }
+]
+
 def select_device():
     print("Available storage devices:")
     try:
@@ -143,13 +162,22 @@ def generate_nixos_config():
         print(f"An error occurred while generating NixOS configuration: {e}")
         sys.exit(1)
 
-def fetch_configuration():
+def select_configuration(configs):
+    print("Available configurations:")
+    for idx, config in enumerate(configs):
+        print(f"{idx + 1}: {config['name']}")
+    choice = input("Select a configuration by number: ")
+    if not choice.isdigit() or int(choice) < 1 or int(choice) > len(configs):
+        print("Invalid selection. Exiting.")
+        sys.exit(1)
+    return configs[int(choice) - 1]
+
+def fetch_configuration(configuration_url):
     print("Fetching preconfigured configuration.nix from the GitHub repository...")
-    url = 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/configuration.nix'
     destination = '/mnt/etc/nixos/configuration.nix'
     try:
         os.makedirs('/mnt/etc/nixos', exist_ok=True)
-        urllib.request.urlretrieve(url, destination)
+        urllib.request.urlretrieve(configuration_url, destination)
         print("Preconfigured configuration.nix has been downloaded and replaced.")
     except Exception as e:
         print("Failed to download configuration.nix. Please check the URL and your internet connection.")
@@ -165,13 +193,12 @@ def install_nixos():
         print("NixOS installation encountered an error. Please check the output above for details.")
         sys.exit(1)
 
-def setup_i3_config():
+def setup_i3_config(i3_config_url):
     print("Setting up i3 configuration...")
     try:
         os.makedirs('/mnt/home/nixos/.config/i3', exist_ok=True)
-        url = 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/.config/i3/config'
         destination = '/mnt/home/nixos/.config/i3/config'
-        urllib.request.urlretrieve(url, destination)
+        urllib.request.urlretrieve(i3_config_url, destination)
         uid = pwd.getpwnam('nixos').pw_uid
         gid = grp.getgrnam('users').gr_gid
         os.chown('/mnt/home/nixos/.config', uid, gid)
@@ -194,9 +221,10 @@ def main():
     format_partitions(device, encrypt_pwd is not None, encrypt_pwd)
     mount_partitions(device, encrypt_pwd is not None)
     generate_nixos_config()
-    fetch_configuration()
+    selected_config = select_configuration(configs)
+    fetch_configuration(selected_config['configuration_url'])
     if install_nixos():
-        setup_i3_config()
+        setup_i3_config(selected_config['i3_config_url'])
         print("You can now reboot your system.")
 
 if __name__ == '__main__':
