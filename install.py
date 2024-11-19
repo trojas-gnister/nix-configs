@@ -9,14 +9,6 @@ import urllib.request
 import pwd
 import grp
 
-def check_install_fzf():
-    if shutil.which('fzf') is None:
-        print("fzf is not installed. Installing fzf...")
-        result = subprocess.run(['nix-env', '-iA', 'nixos.fzf'])
-        if result.returncode != 0:
-            print("Failed to install fzf. Please ensure your Nix package manager is configured correctly.")
-            sys.exit(1)
-
 def select_device():
     print("Available storage devices:")
     try:
@@ -194,7 +186,6 @@ def setup_i3_config():
         sys.exit(1)
 
 def main():
-    check_install_fzf()
     device = select_device()
     check_and_wipe_device(device)
     encrypt_pwd = ask_encryption()
