@@ -18,6 +18,8 @@ in
 
   services.openssh.enable = true;
 
+  programs.git.enable = true;
+
   environment.systemPackages = with pkgs; [
     pkgs.librewolf
     neovim
