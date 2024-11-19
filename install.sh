@@ -113,7 +113,7 @@ nixos-generate-config --root /mnt
 
 # Replace generated configuration.nix with the preconfigured one from the GitHub repository
 echo "Fetching preconfigured configuration.nix from the GitHub repository..."
-curl -o /mnt/etc/nixos/configuration.nix https://raw.githubusercontent.com/trojas-gnister/nixos-configs/main/librewolf-i3/configuration.nix
+curl -o /mnt/etc/nixos/configuration.nix https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/configuration.nix
 
 if [ $? -ne 0 ]; then
   echo "Failed to download configuration.nix. Please check the URL and your internet connection."
@@ -133,7 +133,7 @@ if [ $? -eq 0 ]; then
   mkdir -p /mnt/home/nixos/.config/i3
   
   # Download the i3 config file
-  curl -o /mnt/home/nixos/.config/i3/config https://raw.githubusercontent.com/trojas-gnister/.config/main/i3/config
+  curl -o /mnt/home/nixos/.config/i3/config https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/i3/config
   
   if [ $? -ne 0 ]; then
     echo "Failed to download i3 config file. Please check the URL and your internet connection."
