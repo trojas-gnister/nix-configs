@@ -169,7 +169,7 @@ def setup_i3_config():
     print("Setting up i3 configuration...")
     try:
         os.makedirs('/mnt/home/nixos/.config/i3', exist_ok=True)
-        url = 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/i3/config'
+        url = 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/.config/i3/config'
         destination = '/mnt/home/nixos/.config/i3/config'
         urllib.request.urlretrieve(url, destination)
         uid = pwd.getpwnam('nixos').pw_uid
