@@ -199,7 +199,7 @@ def install_nixos():
         sys.exit(1)
 
 def setup_i3_config(i3_config_url):
-    if i3_config_url
+    if i3_config_url is None:
         print("No i3 configuration. Skipping")
         return
     print("Setting up i3 configuration...")
