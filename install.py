@@ -86,7 +86,7 @@ def get_swap_size():
     swap_size = input("Enter the desired swap size in GB (e.g., 4 for 4GB): ")
     try:
         swap_size_int = int(swap_size)
-        if swap_size_int <= 0:
+        if swap_size_int < 0:
             print("Swap size must be a positive integer.")
             sys.exit(1)
         return swap_size_int
