@@ -220,6 +220,7 @@ def setup_i3_config(i3_config_url):
         print(f"An error occurred while setting up i3 configuration: {e}")
         sys.exit(1)
 
+#TODO: update fstab after nixos install
 def auto_mount_partitions():
     result = subprocess.run(['lsblk', '-o', 'NAME,TYPE,SIZE,FSTYPE,MOUNTPOINT'], stdout=subprocess.PIPE, text=True)
     devices = result.stdout.splitlines()
