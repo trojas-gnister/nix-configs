@@ -26,6 +26,10 @@ configs = [
         'name': 'torrent-i3',
         'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/torrent-i3/configuration.nix',
         'i3_config_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/torrent-i3/.config/i3/config'
+    },
+    {
+        'name': 'gaming-nvidia-kde',
+        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/gaming-nvidia-kde/configuration.nix'
     }
 ]
 
@@ -34,7 +38,7 @@ def select_device():
     try:
         lsblk_output = subprocess.check_output(['lsblk', '-d', '-o', 'NAME,SIZE,MODEL'], text=True)
         devices = []
-        for line in lsblk_output.strip().split('\n')[1:]:  # Skip the header line
+        for line in lsblk_output.strip().split('\n')[1:]:  
             if line.startswith(('sd', 'vd', 'nvme')):
                 devices.append(line)
         if not devices:
@@ -195,6 +199,9 @@ def install_nixos():
         sys.exit(1)
 
 def setup_i3_config(i3_config_url):
+    if i3_config_url
+        print("No i3 configuration. Skipping")
+        return
     print("Setting up i3 configuration...")
     try:
         os.makedirs('/mnt/home/nixos/.config/i3', exist_ok=True)
@@ -213,6 +220,54 @@ def setup_i3_config(i3_config_url):
         print(f"An error occurred while setting up i3 configuration: {e}")
         sys.exit(1)
 
+def auto_mount_devices():
+    # Get a list of available storage devices using 'lsblk'
+    result = subprocess.run(['lsblk', '-o', 'NAME,TYPE,SIZE'], stdout=subprocess.PIPE, text=True)
+    devices = result.stdout.splitlines()
+
+    # Filter out the devices (excluding partitions and loop devices)
+    device_list = [line.split()[0] for line in devices if 'disk' in line]
+    
+    if not device_list:
+        print("No storage devices found.")
+        return
+    
+    print("Available storage devices:")
+    for i, device in enumerate(device_list, 1):
+        print(f"{i}. {device}")
+
+    # Ask the user which devices they want to mount
+    selected_devices = input("Enter the numbers of devices to mount (comma separated): ").strip()
+    selected_devices = selected_devices.split(',')
+
+    # Process each selected device
+    for device_num in selected_devices:
+        try:
+            device_num = int(device_num.strip()) - 1
+            if 0 <= device_num < len(device_list):
+                device_name = device_list[device_num]
+                mount_dir = f"/mnt/{device_name}"
+
+                # Create the mount directory
+                if not os.path.exists(mount_dir):
+                    os.makedirs(mount_dir)
+                    print(f"Created directory: {mount_dir}")
+                
+                # Mount the device
+                mount_command = ['sudo', 'mount', f'/dev/{device_name}', mount_dir]
+                subprocess.run(mount_command, check=True)
+                print(f"Device {device_name} mounted at {mount_dir}")
+            else:
+                print(f"Invalid selection: {device_num + 1}")
+        except ValueError:
+            print("Invalid input, please enter numbers only.")
+        except subprocess.CalledProcessError:
+            print(f"Failed to mount device {device_name}. Ensure it's not already mounted or there are no errors.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+
+
 def main():
     device = select_device()
     check_and_wipe_device(device)
@@ -226,6 +281,7 @@ def main():
     fetch_configuration(selected_config['configuration_url'])
     if install_nixos():
         setup_i3_config(selected_config['i3_config_url'])
+        auto_mount_devices()
         print("You can now reboot your system.")
 
 if __name__ == '__main__':
