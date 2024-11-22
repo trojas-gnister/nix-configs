@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+#TODO: account for when swap size is 0
 import subprocess
 import sys
 import os
