@@ -220,53 +220,43 @@ def setup_i3_config(i3_config_url):
         print(f"An error occurred while setting up i3 configuration: {e}")
         sys.exit(1)
 
-def auto_mount_devices():
-    # Get a list of available storage devices using 'lsblk'
-    result = subprocess.run(['lsblk', '-o', 'NAME,TYPE,SIZE'], stdout=subprocess.PIPE, text=True)
+def auto_mount_partitions():
+    result = subprocess.run(['lsblk', '-o', 'NAME,TYPE,SIZE,FSTYPE,MOUNTPOINT'], stdout=subprocess.PIPE, text=True)
     devices = result.stdout.splitlines()
-
-    # Filter out the devices (excluding partitions and loop devices)
-    device_list = [line.split()[0] for line in devices if 'disk' in line]
+    partitions = [line for line in devices[1:] if "part" in line]
     
-    if not device_list:
-        print("No storage devices found.")
+    if not partitions:
+        print("No partitions found to mount.")
         return
-    
-    print("Available storage devices:")
-    for i, device in enumerate(device_list, 1):
-        print(f"{i}. {device}")
 
-    # Ask the user which devices they want to mount
-    selected_devices = input("Enter the numbers of devices to mount (comma separated): ").strip()
-    selected_devices = selected_devices.split(',')
+    cleaned_partitions = []
+    for i, partition in enumerate(partitions, 1):
+        cleaned_partition = re.sub(r'^[^a-zA-Z0-9]*', '', partition.strip())
+        cleaned_partitions.append(cleaned_partition)
+        print(f"{i}. {cleaned_partition}")
 
-    # Process each selected device
-    for device_num in selected_devices:
+    selected_partitions = input("Enter the numbers of partitions to mount (comma separated): ").strip().split(',')
+
+    for partition_num in selected_partitions:
         try:
-            device_num = int(device_num.strip()) - 1
-            if 0 <= device_num < len(device_list):
-                device_name = device_list[device_num]
-                mount_dir = f"/mnt/{device_name}"
-
-                # Create the mount directory
+            partition_num = int(partition_num.strip()) - 1
+            if 0 <= partition_num < len(cleaned_partitions):
+                partition_info = cleaned_partitions[partition_num].split()
+                partition_name = partition_info[0]
+                mount_dir = f"/mnt/{partition_name}"
                 if not os.path.exists(mount_dir):
                     os.makedirs(mount_dir)
-                    print(f"Created directory: {mount_dir}")
-                
-                # Mount the device
-                mount_command = ['sudo', 'mount', f'/dev/{device_name}', mount_dir]
+                mount_command = ['sudo', 'mount', f'/dev/{partition_name}', mount_dir]
                 subprocess.run(mount_command, check=True)
-                print(f"Device {device_name} mounted at {mount_dir}")
+                print(f"Partition {partition_name} mounted at {mount_dir}")
             else:
-                print(f"Invalid selection: {device_num + 1}")
+                print(f"Invalid selection: {partition_num + 1}")
         except ValueError:
             print("Invalid input, please enter numbers only.")
         except subprocess.CalledProcessError:
-            print(f"Failed to mount device {device_name}. Ensure it's not already mounted or there are no errors.")
+            print(f"Failed to mount partition {partition_name}. Ensure it's not already mounted or there are no errors.")
         except Exception as e:
             print(f"An error occurred: {e}")
-
-
 
 def main():
     device = select_device()
