@@ -213,7 +213,7 @@ def setup_dot_config(dot_config_path):
     print("Setting up .config...")
     try:
         source = os.path.expanduser(dot_config_path)
-        destination = '/mnt/home/nixos/.config/i3'
+        destination = '/mnt/home/nixos/.config'
         os.makedirs(destination, exist_ok=True)
         shutil.copytree(source, destination, dirs_exist_ok=True)
         uid = pwd.getpwnam('nixos').pw_uid
