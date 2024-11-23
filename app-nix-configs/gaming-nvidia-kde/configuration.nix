@@ -70,8 +70,7 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
   "nvidia-settings"
 ];
 
-
-
+  hardware.pulseaudio.enable = true;
   services.spice-vdagentd.enable = true;
   services.spice-autorandr.enable = true;
 
