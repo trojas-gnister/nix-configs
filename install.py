@@ -277,10 +277,10 @@ def main():
     mount_partitions(device, encrypt_pwd is not None)
     generate_nixos_config()
     selected_config = select_configuration(configs)
-    move_configuration(selected_config['config'])
+    move_configuration(selected_config)
     if install_nixos():
         setup_dot_config(selected_config['dot_config_path'])
-        auto_mount_devices()
+        auto_mount_partitions()
         print("You can now reboot your system.")
 
 if __name__ == '__main__':
