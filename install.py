@@ -14,24 +14,30 @@ import grp
 configs = [
     {
         'name': 'librewolf-i3',
-        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/configuration.nix',
-        'i3_config_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/librewolf-i3/.config/i3/config'
+        'configuration_path': '~/NixVMHostForge/app-nix-configs/librewolf-i3/configuration.nix',
+        'dot_config_path': '~/NixVMHostForge/app-nix-configs/librewolf-i3/.config'
     },
     {
         'name': 'chromium-i3',
-        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/chromium-i3/configuration.nix',
-        'i3_config_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/chromium-i3/.config/i3/config'
+        'configuration_path': '~/NixVMHostForge/app-nix-configs/chromium-i3/configuration.nix',
+        'dot_config_path': '~/NixVMHostForge/app-nix-configs/chromium-i3/.config'
     },
     {
         'name': 'torrent-i3',
-        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/torrent-i3/configuration.nix',
-        'i3_config_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/torrent-i3/.config/i3/config'
+        'configuration_path': '~/NixVMHostForge/app-nix-configs/torrent-i3/configuration.nix',
+        'dot_config_path': '~/NixVMHostForge/app-nix-configs/torrent-i3/.config'
     },
     {
         'name': 'gaming-nvidia-kde',
-        'configuration_url': 'https://raw.githubusercontent.com/trojas-gnister/NixVMHostForge/main/app-nix-configs/gaming-nvidia-kde/configuration.nix'
+        'configuration_path': '~/NixVMHostForge/app-nix-configs/gaming-nvidia-kde/configuration.nix'
+    },
+    {
+        'name': 'development-ssh',
+        'configuration_path': '~/NixVMHostForge/app-nix-configs/development-ssh/configuration.nix',
+        'dot_config_path': '~/NixVMHostForge/app-nix-configs/development-ssh/.config'
     }
 ]
+
 
 def select_device():
     print("Available storage devices:")
@@ -177,15 +183,15 @@ def select_configuration(configs):
         sys.exit(1)
     return configs[int(choice) - 1]
 
-def fetch_configuration(configuration_url):
-    print("Fetching preconfigured configuration.nix from the GitHub repository...")
+def move_configuration(config):
+    configuration_path = os.path.expanduser(config['configuration_path'])
     destination = '/mnt/etc/nixos/configuration.nix'
     try:
-        os.makedirs('/mnt/etc/nixos', exist_ok=True)
-        urllib.request.urlretrieve(configuration_url, destination)
-        print("Preconfigured configuration.nix has been downloaded and replaced.")
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        shutil.copy(configuration_path, destination)
+        print("configuration.nix has been moved.")
     except Exception as e:
-        print("Failed to download configuration.nix. Please check the URL and your internet connection.")
+        print(f"Failed to move configuration file: {e}")
         sys.exit(1)
 
 def install_nixos():
@@ -197,16 +203,17 @@ def install_nixos():
     except subprocess.CalledProcessError as e:
         print("NixOS installation encountered an error. Please check the output above for details.")
         sys.exit(1)
-
-def setup_i3_config(i3_config_url):
-    if not i3_config_url:
-        print("No i3 configuration. Skipping")
+        
+def setup_dot_config(dot_config_path):
+    if not dot_config_path:
+        print("No .config configuration. Skipping")
         return
-    print("Setting up i3 configuration...")
+    print("Setting up .config...")
     try:
-        os.makedirs('/mnt/home/nixos/.config/i3', exist_ok=True)
-        destination = '/mnt/home/nixos/.config/i3/config'
-        urllib.request.urlretrieve(i3_config_url, destination)
+        source = os.path.expanduser(dot_config_path)
+        destination = '/mnt/home/nixos/.config/i3'
+        os.makedirs(destination, exist_ok=True)
+        shutil.copytree(source, destination, dirs_exist_ok=True)
         uid = pwd.getpwnam('nixos').pw_uid
         gid = grp.getgrnam('users').gr_gid
         os.chown('/mnt/home/nixos/.config', uid, gid)
@@ -215,12 +222,13 @@ def setup_i3_config(i3_config_url):
                 os.chown(os.path.join(root, momo), uid, gid)
             for momo in files:
                 os.chown(os.path.join(root, momo), uid, gid)
-        print("i3 configuration has been set up.")
+        print(".config has been moved and set up.")
     except Exception as e:
-        print(f"An error occurred while setting up i3 configuration: {e}")
+        print(f"An error occurred while setting up .config: {e}")
         sys.exit(1)
 
-#TODO: update fstab after nixos install
+
+#TODO: update  nix config with selected disks
 def auto_mount_partitions():
     result = subprocess.run(['lsblk', '-o', 'NAME,TYPE,SIZE,FSTYPE,MOUNTPOINT'], stdout=subprocess.PIPE, text=True)
     devices = result.stdout.splitlines()
@@ -269,9 +277,9 @@ def main():
     mount_partitions(device, encrypt_pwd is not None)
     generate_nixos_config()
     selected_config = select_configuration(configs)
-    fetch_configuration(selected_config['configuration_url'])
+    move_configuration(selected_config['config'])
     if install_nixos():
-        setup_i3_config(selected_config['i3_config_url'])
+        setup_dot_config(selected_config['dot_config_path'])
         auto_mount_devices()
         print("You can now reboot your system.")
 
