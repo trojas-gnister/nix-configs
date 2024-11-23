@@ -16,8 +16,10 @@
     neovim
     git
     python3
+    gcc
     tmux
     rustup
+    nodejs_22
   ];
 
   system.stateVersion = "24.05";
