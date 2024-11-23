@@ -17,7 +17,7 @@
     git
     python3
     tmux
-    pkgs.rustup
+    rustup
   ];
 
   system.stateVersion = "24.05";
