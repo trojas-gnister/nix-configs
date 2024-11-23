@@ -15,6 +15,7 @@
   environment.systemPackages = with pkgs; [
     neovim
     git
+    xclip
     python3
     gcc
     tmux
