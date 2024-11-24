@@ -39,49 +39,83 @@ configs = [
     }
 ]
 
-
-
-def select_device():
-    print("Available storage devices:")
+def select_free_space():
+    print("Available storage devices and free space:")
     try:
+        # Get the list of devices
         lsblk_output = subprocess.check_output(['lsblk', '-d', '-o', 'NAME,SIZE,MODEL'], text=True)
         devices = []
-        for line in lsblk_output.strip().split('\n')[1:]:  
-            if line.startswith(('sd', 'vd', 'nvme')):
+        for line in lsblk_output.strip().split('\n')[1:]:
+            if line.startswith(('sd', 'vd', 'nvme', 'hd')):
                 devices.append(line)
         if not devices:
             print("No storage devices found.")
             sys.exit(1)
-        
-        for idx, device_info in enumerate(devices):
-            print(f"{idx + 1}: {device_info}")
-        
-        choice = input("Select a storage device by number: ")
-        if not choice.isdigit() or int(choice) < 1 or int(choice) > len(devices):
+
+        free_spaces = []
+        # For each device, get free space
+        for device_info in devices:
+            parts = device_info.split(None, 2)
+            device_name = parts[0]
+            device_size = parts[1]
+            device_model = parts[2] if len(parts) > 2 else ''
+            parted_output = subprocess.check_output(['parted', '-m', f'/dev/{device_name}', 'unit', 'MiB', 'print', 'free'], text=True)
+            # Parse the output to find free space
+            lines = parted_output.strip().split('\n')
+            for line in lines:
+                if line.startswith('/dev/'):
+                    continue  # skip device info line
+                if line.startswith('BYT;'):
+                    continue  # skip header
+                cols = line.strip(';').split(':')
+                if len(cols) < 7:
+                    continue
+                number, start, end, size, filesystem, name, flags = cols[:7]
+                if number == '':
+                    # This is free space
+                    free_spaces.append({
+                        'device': device_name,
+                        'device_size': device_size,
+                        'device_model': device_model,
+                        'start': start,
+                        'end': end,
+                        'size': size
+                    })
+
+        if not free_spaces:
+            print("No free space found on storage devices.")
+            sys.exit(1)
+
+        # Present free spaces to the user
+        print("Available free spaces:")
+        for idx, fs in enumerate(free_spaces):
+            print(f"{idx + 1}: Device: /dev/{fs['device']} ({fs['device_model']} - {fs['device_size']}), Free space: {fs['size']} (from {fs['start']} to {fs['end']})")
+
+        choice = input("Select a free space by number: ")
+        if not choice.isdigit() or int(choice) < 1 or int(choice) > len(free_spaces):
             print("Invalid selection. Exiting.")
             sys.exit(1)
-        device_line = devices[int(choice) - 1]
-        device_name = device_line.split()[0]
-        return device_name
+
+        selected_fs = free_spaces[int(choice) - 1]
+
+        # Confirm with the user
+        confirm = input(f"You have selected free space of size {selected_fs['size']} on /dev/{selected_fs['device']}. Do you want to proceed? (yes/no): ")
+        if confirm.lower() != 'yes':
+            print("Operation cancelled by user.")
+            sys.exit(1)
+
+        # Proceed with your operation on the selected free space here
+        # For example, create a new partition in the free space
+        print(f"Proceeding with free space on /dev/{selected_fs['device']} from {selected_fs['start']} to {selected_fs['end']}.")
+
+        # Example command to create a new partition (uncomment and customize as needed)
+        # subprocess.run(['parted', '/dev/{}'.format(selected_fs['device']), 'mkpart', 'primary', selected_fs['start'], selected_fs['end']], check=True)
+
+        return selected_fs
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
 
-def check_and_wipe_device(device):
-    try:
-        lsblk_output = subprocess.check_output(['lsblk', f'/dev/{device}'], text=True)
-        if 'part' in lsblk_output:
-            confirm = input(f"/dev/{device} already has partitions. Do you want to delete everything and proceed? (yes/no): ")
-            if confirm.lower() != 'yes':
-                print("Script is unable to proceed due to existing partitions on the device.")
-                sys.exit(1)
-            else:
-                print(f"Deleting existing partitions on /dev/{device}...")
-                subprocess.run(['wipefs', '--all', f'/dev/{device}'], check=True)
-                subprocess.run(['sgdisk', '--zap-all', f'/dev/{device}'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while checking or wiping the device: {e}")
-        sys.exit(1)
 
 def ask_encryption():
     encrypt = input("Do you want to encrypt your partitions? (yes/no): ")
@@ -270,8 +304,7 @@ def auto_mount_partitions():
             print(f"An error occurred: {e}")
 
 def main():
-    device = select_device()
-    check_and_wipe_device(device)
+    device = select_free_space()
     encrypt_pwd = ask_encryption()
     swap_size = get_swap_size()
     partition_device(device, swap_size)
