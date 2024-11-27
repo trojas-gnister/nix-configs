@@ -15,22 +15,27 @@ import re
 configs = [
     {
         'name': 'librewolf-i3',
-        'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/librewolf-i3/configuration.nix',
-        'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/librewolf-i3/.config'
+        'configuration_path': '/home/nixos/NixVMHostForge/nix-configs/librewolf-i3/configuration.nix',
+        'dot_config_path': '/home/nixos/NixVMHostForge/nix-configs/librewolf-i3/.config'
     },
     {
         'name': 'torrent-i3',
-        'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/torrent-i3/configuration.nix',
-        'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/torrent-i3/.config'
+        'configuration_path': '/home/nixos/NixVMHostForge/nix-configs/torrent-i3/configuration.nix',
+        'dot_config_path': '/home/nixos/NixVMHostForge/nix-configs/torrent-i3/.config'
     },
     {
         'name': 'gaming-nvidia-kde',
-        'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/gaming-nvidia-kde/configuration.nix'
+        'configuration_path': '/home/nixos/NixVMHostForge/nix-configs/gaming-nvidia-kde/configuration.nix'
     },
     {
         'name': 'development-i3',
-        'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/development-i3/configuration.nix',
-        'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/development-i3/.config'
+        'configuration_path': '/home/nixos/NixVMHostForge/nix-configs/development-i3/configuration.nix',
+        'dot_config_path': '/home/nixos/NixVMHostForge/nix-configs/development-i3/.config'
+    },
+    {
+        'name': 'host-aarch64-darwin',
+        'configuration_path': '/home/nixos/NixVMHostForge/nix-configs/host-aarch64-darwin/configuration.nix',
+        'dot_config_path': '/home/nixos/NixVMHostForge/nix-configs/host-aarch64-darwin/.config'
     }
 ]
 
