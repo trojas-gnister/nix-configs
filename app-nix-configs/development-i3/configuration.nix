@@ -34,8 +34,8 @@ in
     spice-vdagent
     wl-clipboard
     openvpn
-    tor
     kitty
+    android-tools
   ];
 
   services.xserver = {
