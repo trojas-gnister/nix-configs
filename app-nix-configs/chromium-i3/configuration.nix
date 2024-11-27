@@ -10,7 +10,7 @@ in
     ./hardware-configuration.nix
     (import "${home-manager}/nixos")
   ];
-
+  networking.hostName = "dev";
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
@@ -21,8 +21,15 @@ in
   programs.git.enable = true;
 
   environment.systemPackages = with pkgs; [
-    pkgs.chromium
+    chromium
     neovim
+    git
+    xclip
+    python3
+    gcc
+    tmux
+    rustup
+    nodejs_22
     spice-autorandr
     spice-vdagent
     wl-clipboard
