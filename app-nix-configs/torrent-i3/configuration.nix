@@ -21,8 +21,8 @@ in
   programs.git.enable = true;
 
   environment.systemPackages = with pkgs; [
-    pkgs.qbittorrent
-    pkgs.librewolf
+    qbittorrent
+    librewolf
     neovim
     spice-autorandr
     spice-vdagent
