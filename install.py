@@ -19,11 +19,6 @@ configs = [
         'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/librewolf-i3/.config'
     },
     {
-        'name': 'chromium-i3',
-        'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/chromium-i3/configuration.nix',
-        'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/chromium-i3/.config'
-    },
-    {
         'name': 'torrent-i3',
         'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/torrent-i3/configuration.nix',
         'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/torrent-i3/.config'
@@ -33,9 +28,9 @@ configs = [
         'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/gaming-nvidia-kde/configuration.nix'
     },
     {
-        'name': 'development-ssh',
-        'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/development-ssh/configuration.nix',
-        'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/development-ssh/.config'
+        'name': 'development-i3',
+        'configuration_path': '/home/nixos/NixVMHostForge/app-nix-configs/development-i3/configuration.nix',
+        'dot_config_path': '/home/nixos/NixVMHostForge/app-nix-configs/development-i3/.config'
     }
 ]
 
@@ -229,46 +224,6 @@ def setup_dot_config(dot_config_path):
         print(f"An error occurred while setting up .config: {e}")
         sys.exit(1)
 
-
-#TODO: update  nix config with selected disks
-def auto_mount_partitions():
-    result = subprocess.run(['lsblk', '-o', 'NAME,TYPE,SIZE,FSTYPE,MOUNTPOINT'], stdout=subprocess.PIPE, text=True)
-    devices = result.stdout.splitlines()
-    partitions = [line for line in devices[1:] if "part" in line]
-    
-    if not partitions:
-        print("No partitions found to mount.")
-        return
-
-    cleaned_partitions = []
-    for i, partition in enumerate(partitions, 1):
-        cleaned_partition = re.sub(r'^[^a-zA-Z0-9]*', '', partition.strip())
-        cleaned_partitions.append(cleaned_partition)
-        print(f"{i}. {cleaned_partition}")
-
-    selected_partitions = input("Enter the numbers of partitions to mount (comma separated): ").strip().split(',')
-
-    for partition_num in selected_partitions:
-        try:
-            partition_num = int(partition_num.strip()) - 1
-            if 0 <= partition_num < len(cleaned_partitions):
-                partition_info = cleaned_partitions[partition_num].split()
-                partition_name = partition_info[0]
-                mount_dir = f"/mnt/{partition_name}"
-                if not os.path.exists(mount_dir):
-                    os.makedirs(mount_dir)
-                mount_command = ['sudo', 'mount', f'/dev/{partition_name}', mount_dir]
-                subprocess.run(mount_command, check=True)
-                print(f"Partition {partition_name} mounted at {mount_dir}")
-            else:
-                print(f"Invalid selection: {partition_num + 1}")
-        except ValueError:
-            print("Invalid input, please enter numbers only.")
-        except subprocess.CalledProcessError:
-            print(f"Failed to mount partition {partition_name}. Ensure it's not already mounted or there are no errors.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-
 def main():
     device = select_device()
     check_and_wipe_device(device)
@@ -282,7 +237,6 @@ def main():
     move_configuration(selected_config)
     if install_nixos():
         setup_dot_config(selected_config['dot_config_path'])
-        auto_mount_partitions()
         print("You can now reboot your system.")
 
 if __name__ == '__main__':
