@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
-#TODO: account for when swap size is 0
 import subprocess
 import sys
 import os
 import shutil
 import getpass
-import urllib.request
 import pwd
 import grp
-import re
+import psutil
 
-# Define the list of configurations
+# Define the list of configurations (unchanged)
 configs = [
     {
         'name': 'librewolf-i3',
@@ -39,52 +37,73 @@ configs = [
     }
 ]
 
-
+def check_free_space():
+    partitions = psutil.disk_partitions()
+    partition_info = []
+    for partition in partitions:
+        if partition.fstype == '':
+            continue  # Skip unformatted partitions
+        try:
+            usage = psutil.disk_usage(partition.mountpoint)
+            partition_info.append({
+                "device": partition.device,
+                "mountpoint": partition.mountpoint,
+                "total": usage.total // (1024**2),  # Convert to MB
+                "used": usage.used // (1024**2),  # Convert to MB
+                "free": usage.free // (1024**2),  # Convert to MB
+            })
+        except PermissionError:
+            continue
+    return partition_info
 
 def select_device():
-    print("Available storage devices:")
-    try:
-        lsblk_output = subprocess.check_output(['lsblk', '-d', '-o', 'NAME,SIZE,MODEL'], text=True)
-        devices = []
-        for line in lsblk_output.strip().split('\n')[1:]:  
-            if line.startswith(('sd', 'vd', 'nvme')):
-                devices.append(line)
-        if not devices:
-            print("No storage devices found.")
-            sys.exit(1)
-        
-        for idx, device_info in enumerate(devices):
-            print(f"{idx + 1}: {device_info}")
-        
-        choice = input("Select a storage device by number: ")
-        if not choice.isdigit() or int(choice) < 1 or int(choice) > len(devices):
-            print("Invalid selection. Exiting.")
-            sys.exit(1)
-        device_line = devices[int(choice) - 1]
-        device_name = device_line.split()[0]
-        return device_name
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    print("Checking free space on all mounted partitions...")
+    partitions = check_free_space()
+    if not partitions:
+        print("No mounted partitions with free space found.")
         sys.exit(1)
+    print("Available partitions with free space:")
+    for idx, partition in enumerate(partitions):
+        print(f"{idx + 1}: Device: {partition['device']}, Mountpoint: {partition['mountpoint']}, Free Space: {partition['free']}MB")
+    choice = input("Select a partition by number: ")
+    if not choice.isdigit() or int(choice) < 1 or int(choice) > len(partitions):
+        print("Invalid selection. Exiting.")
+        sys.exit(1)
+    selected_partition = partitions[int(choice) - 1]
+    return selected_partition['device'], selected_partition['free']
 
-def check_and_wipe_device(device):
+def create_partition(device, free_space_mb):
+    size_mb = input(f"Enter the size of the new partition in MB (max {free_space_mb}MB): ")
     try:
-        lsblk_output = subprocess.check_output(['lsblk', f'/dev/{device}'], text=True)
-        if 'part' in lsblk_output:
-            confirm = input(f"/dev/{device} already has partitions. Do you want to delete everything and proceed? (yes/no): ")
-            if confirm.lower() != 'yes':
-                print("Script is unable to proceed due to existing partitions on the device.")
-                sys.exit(1)
-            else:
-                print(f"Deleting existing partitions on /dev/{device}...")
-                subprocess.run(['wipefs', '--all', f'/dev/{device}'], check=True)
-                subprocess.run(['sgdisk', '--zap-all', f'/dev/{device}'], check=True)
+        size_mb = int(size_mb)
+        if size_mb <= 0 or size_mb > free_space_mb:
+            print("Invalid partition size.")
+            sys.exit(1)
+    except ValueError:
+        print("Invalid partition size.")
+        sys.exit(1)
+    try:
+        # Get the starting point for the new partition
+        parted_output = subprocess.check_output(['parted', '-s', device, 'unit', 'MiB', 'print', 'free'], text=True)
+        last_line = parted_output.strip().split('\n')[-1]
+        if 'free' not in last_line:
+            print("No free space available to create a new partition.")
+            sys.exit(1)
+        parts = last_line.split()
+        start = parts[1].replace('MiB', '')
+        start_mb = float(start)
+        end_mb = start_mb + size_mb
+
+        # Use parted to create a new partition
+        print(f"Creating a new partition on {device} from {start_mb}MiB to {end_mb}MiB...")
+        subprocess.run(["parted", '-s', device, 'mkpart', 'primary', 'ext4', f"{start_mb}MiB", f"{end_mb}MiB"], check=True)
+        print("Partition created successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"An error occurred while checking or wiping the device: {e}")
+        print(f"Error creating partition: {e}")
         sys.exit(1)
 
 def ask_encryption():
-    encrypt = input("Do you want to encrypt your partitions? (yes/no): ")
+    encrypt = input("Do you want to encrypt your new partition? (yes/no): ")
     if encrypt.lower() == 'yes':
         encrypt_pwd = getpass.getpass("Enter encryption password: ")
         encrypt_pwd_confirm = getpass.getpass("Confirm encryption password: ")
@@ -94,28 +113,6 @@ def ask_encryption():
         return encrypt_pwd
     else:
         return None
-
-def get_swap_size():
-    swap_size = input("Enter the desired swap size in GB (e.g., 4 for 4GB): ")
-    try:
-        swap_size_int = int(swap_size)
-        if swap_size_int < 0:
-            print("Swap size must be a positive integer.")
-            sys.exit(1)
-        return swap_size_int
-    except ValueError:
-        print("Invalid swap size. Please enter a numeric value.")
-        sys.exit(1)
-
-def partition_device(device, swap_size):
-    print(f"Proceeding to partition /dev/{device}...")
-    try:
-        subprocess.run(['sgdisk', '-n', '1:0:+512M', '-t', '1:EF00', f'/dev/{device}'], check=True)
-        subprocess.run(['sgdisk', '-n', f'2:0:+{swap_size}G', '-t', '2:8300', f'/dev/{device}'], check=True)
-        subprocess.run(['sgdisk', '-n', '3:0:0', '-t', '3:8300', f'/dev/{device}'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while partitioning the device: {e}")
-        sys.exit(1)
 
 def encrypt_partition(device_path, mapper_name, password):
     try:
@@ -133,38 +130,22 @@ def encrypt_partition(device_path, mapper_name, password):
         print(f"An error occurred during encryption: {e}")
         sys.exit(1)
 
-def format_partitions(device, encrypt, encrypt_pwd):
-    print("Formatting partitions...")
+def format_and_mount_partition(device, encrypt_pwd):
     try:
-        subprocess.run(['mkfs.fat', '-F', '32', f'/dev/{device}1'], check=True)
-        if encrypt:
-            print("Setting up encryption on root and swap partitions...")
-            encrypt_partition(f'/dev/{device}2', 'swapcrypt', encrypt_pwd)
-            encrypt_partition(f'/dev/{device}3', 'rootcrypt', encrypt_pwd)
-            subprocess.run(['mkswap', '/dev/mapper/swapcrypt'], check=True)
-            subprocess.run(['mkfs.ext4', '/dev/mapper/rootcrypt'], check=True)
+        if encrypt_pwd:
+            print("Encrypting the partition...")
+            mapper_name = 'cryptnewpartition'
+            encrypt_partition(device, mapper_name, encrypt_pwd)
+            device_to_mount = f"/dev/mapper/{mapper_name}"
         else:
-            subprocess.run(['mkswap', f'/dev/{device}2'], check=True)
-            subprocess.run(['mkfs.ext4', f'/dev/{device}3'], check=True)
+            device_to_mount = device
+        print("Formatting the partition...")
+        subprocess.run(['mkfs.ext4', device_to_mount], check=True)
+        print("Mounting the partition...")
+        os.makedirs('/mnt', exist_ok=True)
+        subprocess.run(['mount', device_to_mount, '/mnt'], check=True)
     except subprocess.CalledProcessError as e:
-        print(f"An error occurred while formatting partitions: {e}")
-        sys.exit(1)
-
-def mount_partitions(device, encrypt):
-    try:
-        print("Mounting partitions...")
-        if encrypt:
-            subprocess.run(['mount', '/dev/mapper/rootcrypt', '/mnt'], check=True)
-            os.makedirs('/mnt/boot', exist_ok=True)
-            subprocess.run(['mount', f'/dev/{device}1', '/mnt/boot'], check=True)
-            subprocess.run(['swapon', '/dev/mapper/swapcrypt'], check=True)
-        else:
-            subprocess.run(['mount', f'/dev/{device}3', '/mnt'], check=True)
-            os.makedirs('/mnt/boot', exist_ok=True)
-            subprocess.run(['mount', f'/dev/{device}1', '/mnt/boot'], check=True)
-            subprocess.run(['swapon', f'/dev/{device}2'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while mounting partitions: {e}")
+        print(f"An error occurred while formatting or mounting the partition: {e}")
         sys.exit(1)
 
 def generate_nixos_config():
@@ -205,7 +186,7 @@ def install_nixos():
     except subprocess.CalledProcessError as e:
         print("NixOS installation encountered an error. Please check the output above for details.")
         sys.exit(1)
-        
+
 def setup_dot_config(dot_config_path):
     if not dot_config_path:
         print("No .config configuration. Skipping")
@@ -230,18 +211,37 @@ def setup_dot_config(dot_config_path):
         sys.exit(1)
 
 def main():
-    device = select_device()
-    check_and_wipe_device(device)
+    device, free_space_mb = select_device()
+
+    # Capture the list of partitions before creating a new one
+    lsblk_output_before = subprocess.check_output(['lsblk', '-nr', device, '-o', 'NAME'], text=True)
+    partitions_before = set(lsblk_output_before.strip().split('\n'))
+
+    create_partition(device, free_space_mb)
     encrypt_pwd = ask_encryption()
-    swap_size = get_swap_size()
-    partition_device(device, swap_size)
-    format_partitions(device, encrypt_pwd is not None, encrypt_pwd)
-    mount_partitions(device, encrypt_pwd is not None)
+
+    # Capture the list of partitions after creating the new one
+    lsblk_output_after = subprocess.check_output(['lsblk', '-nr', device, '-o', 'NAME'], text=True)
+    partitions_after = set(lsblk_output_after.strip().split('\n'))
+
+    # Identify the new partition by finding the difference
+    new_partitions = partitions_after - partitions_before
+    if not new_partitions:
+        print("No new partition found after partitioning.")
+        sys.exit(1)
+    elif len(new_partitions) > 1:
+        print("Multiple new partitions found after partitioning. Please verify manually.")
+        sys.exit(1)
+    else:
+        new_partition_name = new_partitions.pop()
+        new_partition = f"/dev/{new_partition_name}"
+
+    format_and_mount_partition(new_partition, encrypt_pwd)
     generate_nixos_config()
     selected_config = select_configuration(configs)
     move_configuration(selected_config)
     if install_nixos():
-        setup_dot_config(selected_config['dot_config_path'])
+        setup_dot_config(selected_config.get('dot_config_path'))
         print("You can now reboot your system.")
 
 if __name__ == '__main__':
