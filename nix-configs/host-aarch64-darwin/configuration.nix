@@ -31,7 +31,6 @@ in
     
     users.iskry = {
       isNormalUser = true;
-      hashedPassword = "$6$33Iy/jRi/B0v63JH$7vRZBZ2C6eCWyw92rfBeFh6fy/4PmpDUxXMYsul/gCB5rEiH9lmSwdLKlWMk3MDF.QlOpQwy69Zvs2YCefxrX/"; 
       extraGroups = [ "wheel" "libvirtd" "audio" ]; 
       packages = with pkgs; [
         git
