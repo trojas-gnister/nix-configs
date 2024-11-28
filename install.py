@@ -22,6 +22,11 @@ configs = [
         'dot_config_path': '/home/nixos/NixVMHostForge/nix-configs/torrent-i3/.config'
     },
     {
+        'name': 'emulation-i3',
+        'configuration_path': '/home/nixos/NixVMHostForge/nix-configs/emulation-i3/configuration.nix',
+        'dot_config_path': '/home/nixos/NixVMHostForge/nix-configs/emulation-i3/.config'
+    },
+    {
         'name': 'gaming-nvidia-kde',
         'configuration_path': '/home/nixos/NixVMHostForge/nix-configs/gaming-nvidia-kde/configuration.nix'
     },
