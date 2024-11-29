@@ -42,10 +42,19 @@ in
 
   home-manager.users.iskry = { pkgs, ... }: {
     home.stateVersion = "24.11"; 
-	#    xsession.windowManager.i3 = {
-	# enable = true;
-	#
-	#    };
+      wayland.windowManager.sway = {
+    enable = true;
+    wrapperFeatures.gtk = true; # Fixes common issues with GTK 3 apps
+    config = rec {
+      modifier = "Mod4";
+      # Use kitty as default terminal
+      terminal = "kitty"; 
+      # startup = [
+        # Launch Firefox on start
+        # {command = "firefox";}
+      # ];
+    };
+  };
     xdg = {
       enable = true;
       configFile."gtk-3.0/settings.ini".text = ''
@@ -64,9 +73,16 @@ in
     kitty  
     qemu
     virt-manager
-    lxappearance
-    alsa-utils
+    git
+    tmux
+    python3
+    btop
+    wget
+    spice-gtk
     dmidecode
+    grim
+    slurp
+    mako
   ];
 
   variables = {
@@ -74,70 +90,33 @@ in
   };
   };
 
- # programs.sway = {
- #    enable = true;
- #    # package = pkgs.swayfx;
- #    wrapperFeatures.gtk = true;
- #  };
- programs = {
-	i3lock.enable = true;
- };
-  #   enable = true;
-  #   displayManager.sddm.enable = true;
-  #   displayManager.autoLogin.enable = true;
-  #   displayManager.autoLogin.user = "iskry";
-  #   # displayManager.sddm.wayland.enable = true;
-  # };
 
+ programs.sway = {
+    enable = true;
+    wrapperFeatures.gtk = true;
+  };
 
  services = {
-	# 	pipewire = {
-	# 	enable = true;
-	# 	alsa.enable = true;
-	# 	pulse.enable = true;
-	# };
-
+        gnome.gnome-keyring.enable = true;
 	openssh.enable = true;
 	xserver = {
 	enable = true;
 
-	desktopManager = {
-		xterm.enable = true;
-	};
 
 	displayManager = {
-		defaultSession = "none+i3";
+		defaultSession = "sway;
 		autoLogin.enable = true;
 		autoLogin.user = "iskry";
 	};
 
-	windowManager.i3 = {
-		enable = true;
-		extraPackages = with pkgs; [
-			dmenu
-			i3status
-			i3lock
-		];
-	};
-	};
-	#
-	#  picom = {
-	#    enable = true;
-	#    fade = true;
-	#    shadow = true;
-	#    fadeDelta = 4 ;
-	#    inactiveOpacity = 0.8;
-	#    activeOpacity = 1;
-	#    settings = {
-	#      blur = {
-	# strength = 5;
-	#      };
-	#    };
-	#  };	
+
 	};
 
   security.pam.services.swaylock = {};
-	
+  security.polkit.enable = true;
+security.pam.loginLimits = [
+  { domain = "@users"; item = "rtprio"; type = "-"; value = 1; }
+];
 
   system.stateVersion = "24.11";
 }
