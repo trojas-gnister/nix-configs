@@ -58,6 +58,7 @@ in
   environment.variables = {
     GTK_THEME = "Adwaita:dark"; 
   };
+  hardware.pulseaudio.enable = true;
 
   home-manager.users.nixos = { pkgs, ... }: {
     home.stateVersion = "24.05"; 
