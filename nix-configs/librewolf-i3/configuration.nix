@@ -79,7 +79,7 @@ in
   system.stateVersion = "24.05";
 
   environment.pathsToLink = [ "/libexec" ];
-
+  hardware.pulseaudio.enable = true;
   users.users.nixos = {
     isNormalUser = true;
     uid = 1000;
