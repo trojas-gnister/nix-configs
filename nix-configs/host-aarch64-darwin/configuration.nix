@@ -104,14 +104,14 @@ in
 
 
 	displayManager = {
-		defaultSession = "sway;
+		defaultSession = "sway";
 		autoLogin.enable = true;
 		autoLogin.user = "iskry";
 	};
 
 
 	};
-
+};
   security.pam.services.swaylock = {};
   security.polkit.enable = true;
 security.pam.loginLimits = [
