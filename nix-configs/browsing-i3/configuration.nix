@@ -28,7 +28,6 @@ in
     spice-vdagent
     wl-clipboard
     openvpn
-    tor
     kitty
   ];
 
