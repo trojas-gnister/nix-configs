@@ -2,7 +2,7 @@
 
 let
   home-manager = builtins.fetchTarball {
-    url = "https://github.com/nix-community/home-manager/archive/latest.tar.gz";
+    url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
   };
 in
 {
@@ -21,7 +21,8 @@ in
   programs.git.enable = true;
 
   environment.systemPackages = with pkgs; [
-    pkgs.librewolf
+    qbittorrent
+    librewolf
     neovim
     spice-autorandr
     spice-vdagent
@@ -58,7 +59,7 @@ in
   };
 
   home-manager.users.nixos = { pkgs, ... }: {
-    home.stateVersion = "24.05"; 
+    home.stateVersion = "24.11"; 
 
     programs.librewolf = {
       enable = true;
@@ -76,11 +77,11 @@ in
     };
   };
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "24.11";
 
   environment.pathsToLink = [ "/libexec" ];
-  hardware.pulseaudio.enable = true;
-  users.users.nixos = {
+
+users.users.nixos = {
     isNormalUser = true;
     uid = 1000;
     group = "users";
