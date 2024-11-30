@@ -2,7 +2,7 @@
 
 let
   home-manager = builtins.fetchTarball {
-    url = "https://github.com/nix-community/home-manager/archive/latest.tar.gz";
+    url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
   };
 in
 {
@@ -59,7 +59,6 @@ in
 
   services.spice-vdagentd.enable = true;
   services.spice-autorandr.enable = true;
-  hardware.pulseaudio.enable = true;
 
   environment.variables = {
     GTK_THEME = "Adwaita:dark"; 
