@@ -15,14 +15,9 @@ import json
 # Define the list of configurations
 configs = [
     {
-        "name": "librewolf-i3",
-        "configuration_path": "/home/nixos/NixVMHostForge/nix-configs/librewolf-i3/configuration.nix",
-        "dot_config_path": "/home/nixos/NixVMHostForge/nix-configs/librewolf-i3/.config",
-    },
-    {
-        "name": "torrent-i3",
-        "configuration_path": "/home/nixos/NixVMHostForge/nix-configs/torrent-i3/configuration.nix",
-        "dot_config_path": "/home/nixos/NixVMHostForge/nix-configs/torrent-i3/.config",
+        "name": "browsing-i3",
+        "configuration_path": "/home/nixos/NixVMHostForge/nix-configs/browsing-i3/configuration.nix",
+        "dot_config_path": "/home/nixos/NixVMHostForge/nix-configs/browsing-i3/.config",
     },
     {
         "name": "gaming-nvidia-kde",
