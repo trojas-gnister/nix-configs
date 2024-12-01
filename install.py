@@ -4,34 +4,28 @@ import subprocess
 import sys
 import os
 import shutil
-import getpass
-import pwd
-import grp
-import json
 
 
-#TODO: figure out partition creation and management 
-
-# Define the list of configurations
 configs = [
     {
-        "name": "browsing-i3",
-        "configuration_path": "/home/nixos/NixVMHostForge/nix-configs/browsing-i3/configuration.nix",
-        "dot_config_path": "/home/nixos/NixVMHostForge/nix-configs/browsing-i3/.config",
+        "name": "browsing",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/browsing/configuration.nix",
     },
     {
-        "name": "gaming-nvidia-kde",
-        "configuration_path": "/home/nixos/NixVMHostForge/nix-configs/gaming-nvidia-kde/configuration.nix",
+        "name": "steam-gaming",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/steam-gaming/configuration.nix",
     },
     {
-        "name": "development-i3",
-        "configuration_path": "/home/nixos/NixVMHostForge/nix-configs/development-i3/configuration.nix",
-        "dot_config_path": "/home/nixos/NixVMHostForge/nix-configs/development-i3/.config",
+        "name": "non-steam-gaming",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/non-steam-gaming/configuration.nix",
     },
     {
-        "name": "host-aarch64-darwin",
-        "configuration_path": "/home/nixos/NixVMHostForge/nix-configs/host-aarch64-darwin/configuration.nix",
-        "dot_config_path": "/home/nixos/NixVMHostForge/nix-configs/host-aarch64-darwin/.config",
+        "name": "development",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/development/configuration.nix",
+    },
+    {
+        "name": "host",
+        "configuration_path": "/home/nixos/nix-configs/host-config/host-config/configuration.nix",
     },
 ]
 
