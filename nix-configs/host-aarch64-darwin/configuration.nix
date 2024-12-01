@@ -293,6 +293,8 @@ in
           tap_button_map lmr
         }
 
+        default_border none
+
         output eDP-1 {
           scale 1
           # background ~/Pictures/857455.jpg fill
