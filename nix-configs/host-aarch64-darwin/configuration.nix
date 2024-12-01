@@ -69,7 +69,7 @@ in
           modifier = "Mod4";
           terminal = "kitty";
           menu = "dmenu_path | wmenu | xargs swaymsg exec --";
-          wallpaper = "~/Pictures/857455.jpg";
+          # wallpaper = "~/Pictures/857455.jpg";
           display = "eDP-1";
 
           keybindings = {
@@ -109,7 +109,7 @@ in
           output = {
             "$display" = {
               scale = 1;
-              background = "${wallpaper} fill";
+              # background = "${wallpaper} fill";
             };
           };
 
