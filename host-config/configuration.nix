@@ -2,25 +2,34 @@
 #TODO: swayfx
 #TODO: lock when lid closes 
 let
+  currentSystem = builtins.currentSystem;
+  isAarch64 = currentSystem == "aarch64-darwin";
+  isX86_64 = currentSystem == "x86_64-linux";
   home-manager = builtins.fetchTarball {
     url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
   };
 in
 {
   imports = [
-    ./apple-silicon-support #TODO: Asahi
+
+    (if isAarch64 then ./apple-silicon-support else null)
     ./hardware-configuration.nix
     (import "${home-manager}/nixos")
   ];
 
   boot = {
     loader.systemd-boot.enable = true;
-    loader.efi.canTouchEfiVariables = false; #TODO: Asahi
-
+    loader.efi.canTouchEfiVariables = 
+    if isAarch64 
+      then false
+      else true
   };
 
   networking = {
-    hostName = "headspace";
+    hostName = 
+    if isAarch64 
+      then "headspace"
+      else "whitespace"
     networkmanager.enable = true;
   };
 
@@ -344,8 +353,8 @@ in
         }
       '';
       config = {
-        modifier = "Mod4"; # Super key
-        terminal = "kitty"; # Default terminal
+        modifier = "Mod4"; 
+        terminal = "kitty"; 
         bars = [
           {
             position = "top";
@@ -353,7 +362,7 @@ in
           }
         ];
         startup = [
-          { command = "mako"; } # Notifications
+          { command = "mako"; } 
         ];
 
         keybindings = {
