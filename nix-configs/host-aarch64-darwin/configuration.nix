@@ -7,14 +7,14 @@ let
 in
 {
   imports = [
-    ./apple-silicon-support
+    ./apple-silicon-support #TODO: Asahi
     ./hardware-configuration.nix
     (import "${home-manager}/nixos")
   ];
 
   boot = {
     loader.systemd-boot.enable = true;
-    loader.efi.canTouchEfiVariables = false; # Needed for Asahi
+    loader.efi.canTouchEfiVariables = false; #TODO: Asahi
   };
 
   networking = {
@@ -43,6 +43,28 @@ in
     home.stateVersion = "24.11";
 
     programs = {
+      mako = {
+	enable = true;
+	extraConfig = ''
+	background-color=#00000080  
+	border-color=#ffffff40      
+	text-color=#ffffff         
+	font=Sans 14
+	default-timeout=5000
+	width=350                  
+	height=100                
+	padding=10
+	margin=10
+	border-size=2
+	corner-radius=8
+	'';
+      };
+      kitty = {
+	enable = true;
+	extraConfig = ''
+	background_opacity 0.70
+	'';
+      };
       waybar = {
         enable = true;
         settings = {
@@ -293,7 +315,22 @@ in
           tap_button_map lmr
         }
 
-        default_border none
+	default_border none
+        
+	bindswitch --reload --locked lid:on exec swaylock \
+    	--screenshots \
+    	--clock \
+    	--indicator \
+    	--indicator-radius 100 \
+    	--indicator-thickness 7 \
+    	--effect-blur 7x5 \
+    	--effect-vignette 0.5:0.5 \
+    	--ring-color bb00cc \
+    	--key-hl-color 880033 \
+    	--line-color 00000000 \
+    	--inside-color 00000088 \
+    	--separator-color 00000000 \
+    	--grace 2 
 
         output eDP-1 {
           scale 1
@@ -319,6 +356,8 @@ in
           "Mod4+d" = "exec dmenu_run";
           "Mod4+Shift+c" = "reload";
           "Mod4+Shift+e" = "exec swaynag -t warning -m 'Exit sway?' -B 'Yes' 'swaymsg exit'";
+	 "XF86MonBrightnessUp" = "exec brightnessctl -d apple-panel-bl set +10%";
+	 "XF86MonBrightnessDown" = "exec brightnessctl -d apple-panel-bl set 10%-";
           # Navigation
           "Mod4+h" = "focus left";
           "Mod4+j" = "focus down";
@@ -328,7 +367,19 @@ in
           "Mod4+Shift+j" = "move down";
           "Mod4+Shift+k" = "move up";
           "Mod4+Shift+l" = "move right";
-        };
+	 "Mod4+1" = "workspace 1";
+  	 "Mod4+2" = "workspace 2";
+	 "Mod4+3" = "workspace 3";
+  	 "Mod4+4" = "workspace 4";
+  	 "Mod4+5" = "workspace 5";
+  	 "Mod4+6" = "workspace 6";
+  	 "Mod4+7" = "workspace 7";
+  	 "Mod4+8" = "workspace 8";
+  	 "Mod4+9" = "workspace 9";
+  	 "Mod4+0" = "workspace 10";
+	 "Mod4+Left" = "workspace prev";
+	 "Mod4+Right" = "workspace next";
+	};
       };
     };
 
@@ -341,6 +392,7 @@ in
   environment = {
     pathsToLink = [ "/libexec" ];
     systemPackages = with pkgs; [
+      dmenu
       neovim
       wl-clipboard
       openvpn
@@ -357,6 +409,8 @@ in
       grim
       slurp
       mako
+      brightnessctl
+      pciutils
     ];
     variables = {
       GTK_THEME = "Adwaita:dark";
