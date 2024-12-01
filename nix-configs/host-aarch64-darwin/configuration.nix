@@ -43,89 +43,71 @@ in
     home.stateVersion = "24.11";
 
     programs = {
-      swaylock = {
-        enable = true;
-        settings = {
-          screenshots = true;
-          clock = true;
-          indicator = true;
-          indicator-radius = 100;
-          indicator-thickness = 7;
-          effect-blur = "7x5";
-          effect-vignette = "0.5:0.5";
-          ring-color = "bb00cc";
-          key-hl-color = "880033";
-          line-color = "00000000";
-          inside-color = "00000088";
-          separator-color = "00000000";
-          grace = 2;
-        };
+   swaylock = {
+      enable = true;
+      settings = {
+        screenshots = true;
+        clock = true;
+        indicator = true;
+        indicator-radius = 100;
+        indicator-thickness = 7;
+        effect-blur = "7x5";
+        effect-vignette = "0.5:0.5";
+        ring-color = "bb00cc";
+        key-hl-color = "880033";
+        line-color = "00000000";
+        inside-color = "00000088";
+        separator-color = "00000000";
+        grace = 2;
       };
+    };
+    };
 
-      sway = {
-        enable = true;
-        wrapperFeatures.gtk = true;
-        config = rec {
-          modifier = "Mod4";
-          terminal = "kitty";
-          menu = "dmenu_path | wmenu | xargs swaymsg exec --";
-          # wallpaper = "~/Pictures/857455.jpg";
-          display = "eDP-1";
+    wayland.windowManager.sway = {
+      enable = true;
+      wrapperFeatures.gtk = true;
+         extraConfig = ''
+      input "1452:641:Apple_Internal_Keyboard_/_Trackpad" {
+        dwt enabled
+        tap enabled
+        accel_profile adaptive
+        pointer_accel 0
+        natural_scroll enabled
+        scroll_method two_finger
+        middle_emulation enabled
+        tap_button_map lmr
+      }
 
-          keybindings = {
-            "Mod4+Return" = "exec kitty";
-            "Mod4+Shift+q" = "kill";
-            "Mod4+d" = "exec ${menu}";
-            "Mod4+Shift+c" = "reload";
-            "Mod4+Shift+e" = "exec swaynag -t warning -m 'Exit sway?' -B 'Yes' 'swaymsg exit'";
-            # Navigation
-            "Mod4+h" = "focus left";
-            "Mod4+j" = "focus down";
-            "Mod4+k" = "focus up";
-            "Mod4+l" = "focus right";
-            "Mod4+Shift+h" = "move left";
-            "Mod4+Shift+j" = "move down";
-            "Mod4+Shift+k" = "move up";
-            "Mod4+Shift+l" = "move right";
-            # Workspaces
-            "Mod4+1" = "workspace number 1";
-            "Mod4+Shift+1" = "move container to workspace number 1";
-            # Additional keybindings as required...
-          };
+      output eDP-1 {
+        scale 1
+        # background ~/Pictures/857455.jpg fill
+      }
+    '';
+      config = {
+        modifier = "Mod4"; # Super key
+        terminal = "kitty"; # Default terminal
+        # Example startup applications
+        startup = [
+          { command = "mako"; } # Notifications
+        ];
 
-          appearance = {
-            corner_radius = 10;
-            blur = {
-              on = true;
-              passes = 2;
-              radius = 5;
-            };
-            shadows = {
-              on = true;
-              color = "#0000007F";
-            };
-          };
-
-          output = {
-            "$display" = {
-              scale = 1;
-              # background = "${wallpaper} fill";
-            };
-          };
-
-          input = {
-            "1452:641:Apple_Internal_Keyboard_/_Trackpad" = {
-              dwt = "enabled";
-              tap = "enabled";
-              accel_profile = "adaptive";
-              pointer_accel = 0;
-              natural_scroll = "enabled";
-              scroll_method = "two_finger";
-              middle_emulation = "enabled";
-              tap_button_map = "lmr";
-            };
-          };
+        keybindings = {
+          "Mod4+Return" = "exec kitty";
+          "Mod4+Shift+q" = "kill";
+          "Mod4+d" = "exec dmenu_run";
+          "Mod4+Shift+c" = "reload";
+          "Mod4+Shift+e" = "exec swaynag -t warning -m 'Exit sway?' -B 'Yes' 'swaymsg exit'";
+          # Navigation
+          "Mod4+h" = "focus left";
+          "Mod4+j" = "focus down";
+          "Mod4+k" = "focus up";
+          "Mod4+l" = "focus right";
+          "Mod4+Shift+h" = "move left";
+          "Mod4+Shift+j" = "move down";
+          "Mod4+Shift+k" = "move up";
+          "Mod4+Shift+l" = "move right";
         };
+
       };
     };
 
@@ -169,10 +151,17 @@ in
       displayManager.autoLogin = {
         enable = true;
         user = "iskry";
-      };
+     }; 
     };
   };
 
+ programs = { 
+ 	sway = {
+	enable =  true;
+	xwayland.enable = true;
+    };
+    };
+ 
   security = {
     polkit.enable = true;
     pam = {
