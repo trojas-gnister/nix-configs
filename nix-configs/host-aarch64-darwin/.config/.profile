@@ -1,2 +1,0 @@
-export GTK_THEME=Adwaita-dark
-export QT_QPA_PLATFORMTHEME=gtk2
