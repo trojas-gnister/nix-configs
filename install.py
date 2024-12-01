@@ -68,30 +68,6 @@ def move_configuration(config):
         sys.exit(1)
 
 
-def setup_dot_config(dot_config_path):
-    if not dot_config_path:
-        print("No .config configuration. Skipping")
-        return
-    print("Setting up .config...")
-    try:
-        source = os.path.expanduser(dot_config_path)
-        destination = "/mnt/home/nixos/.config"
-        os.makedirs(destination, exist_ok=True)
-        shutil.copytree(source, destination, dirs_exist_ok=True)
-        uid = pwd.getpwnam("nixos").pw_uid
-        gid = grp.getgrnam("users").gr_gid
-        os.chown(destination, uid, gid)
-        for root, dirs, files in os.walk(destination):
-            for momo in dirs:
-                os.chown(os.path.join(root, momo), uid, gid)
-            for momo in files:
-                os.chown(os.path.join(root, momo), uid, gid)
-        print(".config has been moved and set up.")
-    except Exception as e:
-        print(f"An error occurred while setting up .config: {e}")
-        sys.exit(1)
-
-
 def install_nixos():
     print("Starting NixOS installation...")
     try:
@@ -110,7 +86,6 @@ def main():
     selected_config = select_configuration(configs)
     move_configuration(selected_config)
     if install_nixos():
-        setup_dot_config(selected_config.get("dot_config_path"))
         print("You can now reboot your system.")
 
 
