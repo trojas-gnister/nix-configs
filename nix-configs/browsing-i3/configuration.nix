@@ -1,5 +1,7 @@
 { config, lib, pkgs, ... }:
-
+#TODO: find audio solution for VMs
+#TODO: swayfx
+#TODO: lock when lid closes 
 let
   home-manager = builtins.fetchTarball {
     url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
