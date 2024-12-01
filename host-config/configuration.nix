@@ -1,5 +1,6 @@
 { config, lib, pkgs, ... }:
-
+#TODO: swayfx
+#TODO: lock when lid closes 
 let
   home-manager = builtins.fetchTarball {
     url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
@@ -15,6 +16,7 @@ in
   boot = {
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = false; #TODO: Asahi
+
   };
 
   networking = {
@@ -23,10 +25,14 @@ in
   };
 
   time.timeZone = "America/Chicago";
-
-  virtualisation.libvirtd = {
-    enable = true;
-    qemu.ovmf.enable = true;
+  hardware.opengl.enable = true;
+  virtualisation = {
+  	spiceUSBRedirection.enable = true;
+ 
+  	libvirtd = {
+    		enable = true;
+    		qemu.ovmf.enable = true;
+    };
   };
 
   users.users.iskry = {
@@ -75,11 +81,11 @@ in
             output = [
               "eDP-1"
             ];
-            modules-left = [ "sway/workspaces" "sway/mode" "custom/media" ];
+            modules-left = [ "sway/workspaces" "sway/mode" ];
             modules-center = [ "sway/window" ];
             modules-right = [
               "pulseaudio" "network" "backlight" "cpu" "memory" "battery"
-              "battery#bat2" "clock" "tray"
+              "clock" "tray"
             ];
 
             "sway/workspaces" = {
@@ -356,8 +362,8 @@ in
           "Mod4+d" = "exec dmenu_run";
           "Mod4+Shift+c" = "reload";
           "Mod4+Shift+e" = "exec swaynag -t warning -m 'Exit sway?' -B 'Yes' 'swaymsg exit'";
-	 "XF86MonBrightnessUp" = "exec brightnessctl -d apple-panel-bl set +10%";
-	 "XF86MonBrightnessDown" = "exec brightnessctl -d apple-panel-bl set 10%-";
+	        "XF86MonBrightnessUp" = "exec brightnessctl -d apple-panel-bl set +10%";
+	        "XF86MonBrightnessDown" = "exec brightnessctl -d apple-panel-bl set 10%-";
           # Navigation
           "Mod4+h" = "focus left";
           "Mod4+j" = "focus down";
@@ -377,8 +383,18 @@ in
   	 "Mod4+8" = "workspace 8";
   	 "Mod4+9" = "workspace 9";
   	 "Mod4+0" = "workspace 10";
-	 "Mod4+Left" = "workspace prev";
-	 "Mod4+Right" = "workspace next";
+	 "Ctrl+Left" = "workspace prev";
+	 "Ctrl+Right" = "workspace next";
+	 "Mod4+Shift+1" = "move container to workspace number 1";
+	 "Mod4+Shift+2" = "move container to workspace number 2";
+	 "Mod4+Shift+3" = "move container to workspace number 3";
+	 "Mod4+Shift+4" = "move container to workspace number 4";
+	 "Mod4+Shift+5" = "move container to workspace number 5";
+	 "Mod4+Shift+6" = "move container to workspace number 6";
+  	 "Mod4+Shift+7" = "move container to workspace number 7";
+	 "Mod4+Shift+8" = "move container to workspace number 8";
+	 "Mod4+Shift+9" = "move container to workspace number 9";
+	 "Mod4+Shift+0" = "move container to workspace number 10";
 	};
       };
     };
