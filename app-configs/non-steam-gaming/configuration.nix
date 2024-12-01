@@ -2,7 +2,7 @@
 
 let
   home-manager = builtins.fetchTarball {
-    url = "https://github.com/nix-community/home-manager/archive/latest.tar.gz";
+    url = "https://github.com/nix-community/home-manager/archive/stable.tar.gz";
   };
 in
 {
