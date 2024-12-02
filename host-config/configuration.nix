@@ -100,9 +100,9 @@ in
             layer = "top";
             position = "top";
             height = 30;
-            output = [
-              "eDP-1"
-            ];
+            #output = [
+            #  "eDP-1"
+           # ];
             modules-left = [ "sway/workspaces" "sway/mode" ];
             modules-center = [ "sway/window" ];
             modules-right = [
@@ -360,10 +360,10 @@ in
     	--separator-color 00000000 \
     	--grace 2 
 
-        output eDP-1 {
-          scale 1
+        # output eDP-1 {
+         # scale 1
           # background ~/Pictures/857455.jpg fill
-        }
+       # }
       '';
       config = {
         modifier = "Mod4"; 
