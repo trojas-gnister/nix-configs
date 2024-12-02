@@ -87,9 +87,9 @@ def get_partitions(device):
     return partitions
 
 
-def partition_device(device, swap_size):
+def partition_device(device, swap_size, efi_required):
     print(f"Proceeding to partition /dev/{device}...")
-    efi_required = confirm_efi()
+
     try:
         # Check for existing EFI partition
         existing_partitions = get_partitions(device)
@@ -179,11 +179,10 @@ def encrypt_partition(device_path, mapper_name, password):
         sys.exit(1)
 
 
-def format_partitions(device, encrypt, encrypt_pwd, swap_size):
+def format_partitions(device, encrypt, encrypt_pwd, swap_size, efi_required):
     print("Formatting partitions...")
     try:
         partitions = get_partitions(device)
-        efi_required = confirm_efi()
 
         # Find partitions by partition label (PARTLABEL)
         efi_partition = next(
@@ -256,7 +255,7 @@ def format_partitions(device, encrypt, encrypt_pwd, swap_size):
         sys.exit(1)
 
 
-def mount_partitions(device, encrypt, swap_size):
+def mount_partitions(device, encrypt, swap_size, efi_required):
     try:
         print("Mounting partitions...")
         partitions = get_partitions(device)
@@ -303,7 +302,7 @@ def mount_partitions(device, encrypt, swap_size):
                     ["mount", efi_partition, "/mnt/boot"],
                     check=True,
                 )
-            elif confirm_efi():
+            elif efi_required:
                 print("EFI partition not found.")
                 sys.exit(1)
 
@@ -322,7 +321,7 @@ def mount_partitions(device, encrypt, swap_size):
             if efi_partition:
                 os.makedirs("/mnt/boot", exist_ok=True)
                 subprocess.run(["mount", efi_partition, "/mnt/boot"], check=True)
-            elif confirm_efi():
+            elif efi_required:
                 print("EFI partition not found.")
                 sys.exit(1)
 
@@ -341,9 +340,12 @@ def main():
     device = select_device()
     encrypt_pwd = ask_encryption()
     swap_size = get_swap_size()
-    partition_device(device, swap_size)
-    format_partitions(device, encrypt_pwd is not None, encrypt_pwd, swap_size)
-    mount_partitions(device, encrypt_pwd is not None, swap_size)
+    efi_required = confirm_efi()
+    partition_device(device, swap_size, efi_required)
+    format_partitions(
+        device, encrypt_pwd is not None, encrypt_pwd, swap_size, efi_required
+    )
+    mount_partitions(device, encrypt_pwd is not None, swap_size, efi_required)
     print("Partitions have been successfully set up and mounted.")
 
 
