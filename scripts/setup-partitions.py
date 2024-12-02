@@ -71,6 +71,7 @@ def get_swap_size():
 
 
 def get_partitions(device):
+    # Get partition information using lsblk
     lsblk_output = subprocess.check_output(
         ["lsblk", "-o", "NAME,FSTYPE,PARTLABEL", "-n", f"/dev/{device}"],
         text=True,
@@ -82,6 +83,12 @@ def get_partitions(device):
         fstype = parts[1] if len(parts) > 1 else ""
         partlabel = parts[2] if len(parts) > 2 else ""
         partitions[f"/dev/{name}"] = {"fstype": fstype, "partlabel": partlabel}
+
+    # Debugging output
+    print("Partitions detected:")
+    for key, value in partitions.items():
+        print(f"{key}: {value}")
+
     return partitions
 
 
@@ -135,6 +142,7 @@ def partition_device(device, swap_size, efi_required):
             ["sgdisk", "-n", "0:0:0", "-t", "0:8300", "-c", "0:ROOT", f"/dev/{device}"],
             check=True,
         )
+        subprocess.run(["sync"], check=True)
 
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while partitioning the device: {e}")
@@ -191,6 +199,9 @@ def format_partitions(device, encrypt, encrypt_pwd, swap_size, efi_required):
             ),
             None,
         )
+        if not efi_partition and efi_required:
+            print("EFI partition not found in:", partitions)
+            sys.exit(1)
         swap_partition = next(
             (
                 part
@@ -258,7 +269,6 @@ def mount_partitions(device, encrypt, swap_size, efi_required):
         print("Mounting partitions...")
         partitions = get_partitions(device)
 
-        # Find partitions by partition label (PARTLABEL)
         efi_partition = next(
             (
                 part
