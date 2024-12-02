@@ -6,8 +6,8 @@ import getpass
 import os
 
 
+# TODO: if there are no devices with 20GB+ free space throw an error
 def select_device():
-    # List available storage devices
     print("Available storage devices:")
     try:
         lsblk_output = subprocess.check_output(
@@ -71,7 +71,6 @@ def get_swap_size():
 
 
 def get_partitions(device):
-    # Get partition information using lsblk
     lsblk_output = subprocess.check_output(
         ["lsblk", "-l", "-o", "NAME,TYPE", "-n", f"/dev/{device}"],
         text=True,
@@ -84,7 +83,6 @@ def get_partitions(device):
         if type_ == "part":
             partitions.append(f"/dev/{name}")
 
-    # Debugging output
     print("Partitions detected:")
     for partition in partitions:
         print(partition)
@@ -96,13 +94,10 @@ def partition_device(device, swap_size, efi_required):
     print(f"Proceeding to partition /dev/{device}...")
 
     try:
-        # Get list of partitions before partitioning
         existing_partitions = set(get_partitions(device))
 
-        # Create partitions
         partition_commands = []
 
-        # Note: Using '0' for partition number to use next available number
         if efi_required:
             partition_commands.append(
                 [
@@ -127,7 +122,6 @@ def partition_device(device, swap_size, efi_required):
                 ]
             )
 
-        # Create root partition with remaining space
         partition_commands.append(
             [
                 "sgdisk",
@@ -139,18 +133,15 @@ def partition_device(device, swap_size, efi_required):
             ]
         )
 
-        # Execute partition commands
         for cmd in partition_commands:
             subprocess.run(cmd, check=True)
 
         subprocess.run(["sync"], check=True)
 
-        # Get list of partitions after partitioning
         all_partitions = set(get_partitions(device))
         new_partitions = list(all_partitions - existing_partitions)
         new_partitions.sort()  # Sort the partitions
 
-        # Map the partitions based on the order they were created
         partition_mapping = {}
         idx = 0
 
@@ -164,12 +155,10 @@ def partition_device(device, swap_size, efi_required):
 
         partition_mapping["root_partition"] = new_partitions[idx]
 
-        # Debugging output
         print("Partition mapping:")
         for key, value in partition_mapping.items():
             print(f"{key}: {value}")
 
-        # Return partition mapping for later functions
         return partition_mapping
 
     except subprocess.CalledProcessError as e:
@@ -179,7 +168,6 @@ def partition_device(device, swap_size, efi_required):
 
 def encrypt_partition(device_path, mapper_name, password):
     try:
-        # Format the partition with LUKS encryption
         cryptsetup_format_cmd = [
             "cryptsetup",
             "luksFormat",
@@ -195,7 +183,6 @@ def encrypt_partition(device_path, mapper_name, password):
                 process.returncode, cryptsetup_format_cmd
             )
 
-        # Open the encrypted partition
         cryptsetup_open_cmd = [
             "cryptsetup",
             "open",
