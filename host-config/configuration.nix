@@ -17,12 +17,25 @@ in
     (import "${home-manager}/nixos")
   ];
 
-  boot = {
-    loader.systemd-boot.enable = true;
-    loader.efi.canTouchEfiVariables = 
-    if isAarch64 
-      then false
-      else true
+  boot = if isAarch64 then {
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = false;
+    };
+  } else {
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+    };
+    kernelModules = [ "kvm" "kvm_intel" ];
+    kernelParams = [ "intel_iommu=on" "iommu=pt" ];
+    initrd = {
+      kernelModules = [ "vfio_pci" "vfio" "vfio_iommu_type1" ];
+    };
+    extraModprobeConfig = ''
+      options vfio-pci ids=8086:15f3,10de:2484,10de:228b,144d:a808,8086:0094
+    '';
+    blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" ];
   };
 
   networking = {
