@@ -6,8 +6,8 @@ import getpass
 import os
 
 
-# TODO: if device has less than 20GB of free space throw error
 def select_device():
+    # List available storage devices
     print("Available storage devices:")
     try:
         lsblk_output = subprocess.check_output(
@@ -71,8 +71,9 @@ def get_swap_size():
 
 
 def get_partitions(device):
+    # Get partition information using lsblk with PARTLABEL
     lsblk_output = subprocess.check_output(
-        ["lsblk", "-o", "NAME,FSTYPE,LABEL", "-n", f"/dev/{device}"],
+        ["lsblk", "-o", "NAME,FSTYPE,PARTLABEL", "-n", f"/dev/{device}"],
         text=True,
     )
     partitions = {}
@@ -81,23 +82,26 @@ def get_partitions(device):
         if len(parts) >= 1:
             name = parts[0]
             fstype = parts[1] if len(parts) > 1 else ""
-            label = parts[2] if len(parts) > 2 else ""
-            partitions[f"/dev/{name}"] = {"fstype": fstype, "label": label}
+            partlabel = parts[2] if len(parts) > 2 else ""
+            partitions[f"/dev/{name}"] = {"fstype": fstype, "partlabel": partlabel}
     return partitions
 
 
-def partition_device(device, swap_size, efi_required):
+def partition_device(device, swap_size):
     print(f"Proceeding to partition /dev/{device}...")
+    efi_required = confirm_efi()
     try:
+        # Check for existing EFI partition
         existing_partitions = get_partitions(device)
         efi_partition_exists = any(
-            info["fstype"] == "vfat" and info.get("label") == "EFI"
-            for info in existing_partitions.values()
+            info.get("partlabel") == "EFI" for info in existing_partitions.values()
         )
         if efi_partition_exists:
             print("An EFI System Partition already exists.")
             efi_required = False
 
+        # Create partitions
+        # Note: Using '0' for partition number to use next available number
         if efi_required:
             subprocess.run(
                 [
@@ -128,6 +132,7 @@ def partition_device(device, swap_size, efi_required):
                 check=True,
             )
 
+        # Create root partition with remaining space
         subprocess.run(
             ["sgdisk", "-n", "0:0:0", "-t", "0:8300", "-c", "0:ROOT", f"/dev/{device}"],
             check=True,
@@ -140,6 +145,7 @@ def partition_device(device, swap_size, efi_required):
 
 def encrypt_partition(device_path, mapper_name, password):
     try:
+        # Format the partition with LUKS encryption
         cryptsetup_format_cmd = [
             "cryptsetup",
             "luksFormat",
@@ -155,6 +161,7 @@ def encrypt_partition(device_path, mapper_name, password):
                 process.returncode, cryptsetup_format_cmd
             )
 
+        # Open the encrypted partition
         cryptsetup_open_cmd = [
             "cryptsetup",
             "open",
@@ -172,25 +179,38 @@ def encrypt_partition(device_path, mapper_name, password):
         sys.exit(1)
 
 
-def format_partitions(device, encrypt, encrypt_pwd, efi_required, swap_size):
+def format_partitions(device, encrypt, encrypt_pwd, swap_size):
     print("Formatting partitions...")
     try:
         partitions = get_partitions(device)
+        efi_required = confirm_efi()
 
+        # Find partitions by partition label (PARTLABEL)
         efi_partition = next(
-            (part for part, info in partitions.items() if info["label"] == "EFI"), None
+            (
+                part
+                for part, info in partitions.items()
+                if info.get("partlabel") == "EFI"
+            ),
+            None,
         )
         swap_partition = next(
-            (part for part, info in partitions.items() if info["label"] == "SWAP"), None
+            (
+                part
+                for part, info in partitions.items()
+                if info.get("partlabel") == "SWAP"
+            ),
+            None,
         )
         root_partition = next(
-            (part for part, info in partitions.items() if info["label"] == "ROOT"), None
+            (
+                part
+                for part, info in partitions.items()
+                if info.get("partlabel") == "ROOT"
+            ),
+            None,
         )
 
-        # Print identified partitions
-        print(f"EFI Partition: {efi_partition}")
-        print(f"SWAP Partition: {swap_partition}")
-        print(f"ROOT Partition: {root_partition}")
         if efi_required and efi_partition:
             subprocess.run(
                 ["mkfs.fat", "-F", "32", efi_partition],
@@ -240,16 +260,31 @@ def mount_partitions(device, encrypt, swap_size):
     try:
         print("Mounting partitions...")
         partitions = get_partitions(device)
-        # swap_size = get_swap_size()
 
+        # Find partitions by partition label (PARTLABEL)
         efi_partition = next(
-            (part for part, info in partitions.items() if info["label"] == "EFI"), None
+            (
+                part
+                for part, info in partitions.items()
+                if info.get("partlabel") == "EFI"
+            ),
+            None,
         )
         swap_partition = next(
-            (part for part, info in partitions.items() if info["label"] == "SWAP"), None
+            (
+                part
+                for part, info in partitions.items()
+                if info.get("partlabel") == "SWAP"
+            ),
+            None,
         )
         root_partition = next(
-            (part for part, info in partitions.items() if info["label"] == "ROOT"), None
+            (
+                part
+                for part, info in partitions.items()
+                if info.get("partlabel") == "ROOT"
+            ),
+            None,
         )
 
         if encrypt:
@@ -268,7 +303,7 @@ def mount_partitions(device, encrypt, swap_size):
                     ["mount", efi_partition, "/mnt/boot"],
                     check=True,
                 )
-            else:
+            elif confirm_efi():
                 print("EFI partition not found.")
                 sys.exit(1)
 
@@ -287,7 +322,7 @@ def mount_partitions(device, encrypt, swap_size):
             if efi_partition:
                 os.makedirs("/mnt/boot", exist_ok=True)
                 subprocess.run(["mount", efi_partition, "/mnt/boot"], check=True)
-            else:
+            elif confirm_efi():
                 print("EFI partition not found.")
                 sys.exit(1)
 
@@ -306,16 +341,8 @@ def main():
     device = select_device()
     encrypt_pwd = ask_encryption()
     swap_size = get_swap_size()
-    efi_required = confirm_efi()
-    partition_device(device, swap_size, efi_required)
-    if encrypt_pwd:
-        # Open encrypted partitions before formatting
-        encrypt_partition(f"/dev/mapper/rootcrypt", "rootcrypt", encrypt_pwd)
-        if swap_size > 0:
-            encrypt_partition(f"/dev/mapper/swapcrypt", "swapcrypt", encrypt_pwd)
-    format_partitions(
-        device, encrypt_pwd is not None, encrypt_pwd, efi_required, swap_size
-    )
+    partition_device(device, swap_size)
+    format_partitions(device, encrypt_pwd is not None, encrypt_pwd, swap_size)
     mount_partitions(device, encrypt_pwd is not None, swap_size)
     print("Partitions have been successfully set up and mounted.")
 
