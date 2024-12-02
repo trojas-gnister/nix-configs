@@ -71,7 +71,6 @@ def get_swap_size():
 
 
 def get_partitions(device):
-    # Get partition information using lsblk with PARTLABEL
     lsblk_output = subprocess.check_output(
         ["lsblk", "-o", "NAME,FSTYPE,PARTLABEL", "-n", f"/dev/{device}"],
         text=True,
@@ -79,11 +78,10 @@ def get_partitions(device):
     partitions = {}
     for line in lsblk_output.strip().split("\n"):
         parts = line.strip().split()
-        if len(parts) >= 1:
-            name = parts[0]
-            fstype = parts[1] if len(parts) > 1 else ""
-            partlabel = parts[2] if len(parts) > 2 else ""
-            partitions[f"/dev/{name}"] = {"fstype": fstype, "partlabel": partlabel}
+        name = parts[0]
+        fstype = parts[1] if len(parts) > 1 else ""
+        partlabel = parts[2] if len(parts) > 2 else ""
+        partitions[f"/dev/{name}"] = {"fstype": fstype, "partlabel": partlabel}
     return partitions
 
 
