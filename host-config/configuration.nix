@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 #TODO: swayfx
-#TODO: lock when lid closes 
+#TODO: lock when lid closes
 let
   currentSystem = builtins.trace "Current system:" builtins.currentSystem;
   isAarch64 = builtins.trace "Is Aarch64:" (currentSystem == "aarch64-darwin");
@@ -11,14 +11,12 @@ let
 in
 {
 
-imports = 
+imports =
   (if isAarch64 then
-    [ ./apple-silicon-support ./hardware-configuration.nix ]
+    [ ./apple-silicon-support ./hardware-configuration.nix (import "${home-manager}/nixos")]
    else
-    [ ./hardware-configuration.nix ]
-  ) ++ [
-    (import "${home-manager}/nixos")
-  ];
+    [ ./hardware-configuration.nix (import "${home-manager}/nixos")]
+  );
 
 
   boot = if isAarch64 then {
@@ -43,10 +41,10 @@ imports =
   };
 
   networking = {
-    hostName = 
-    if isAarch64 
+    hostName =
+    if isAarch64
       then "headspace"
-      else "whitespace"
+      else "whitespace";
     networkmanager.enable = true;
   };
 
@@ -54,7 +52,7 @@ imports =
   hardware.opengl.enable = true;
   virtualisation = {
   	spiceUSBRedirection.enable = true;
- 
+
   	libvirtd = {
     		enable = true;
     		qemu.ovmf.enable = true;
@@ -78,13 +76,13 @@ imports =
       mako = {
 	enable = true;
 	extraConfig = ''
-	background-color=#00000080  
-	border-color=#ffffff40      
-	text-color=#ffffff         
+	background-color=#00000080
+	border-color=#ffffff40    
+	text-color=#ffffff        
 	font=Sans 14
 	default-timeout=5000
-	width=350                  
-	height=100                
+	width=350                 
+	height=100
 	padding=10
 	margin=10
 	border-size=2
@@ -199,7 +197,7 @@ imports =
           #idle_inhibitor,
           #mpd {
               padding: 0 10px;
-              margin: 6px 3px; 
+              margin: 6px 3px;
               color: #000000;
           }
 
@@ -348,7 +346,7 @@ imports =
         }
 
 	default_border none
-        
+
 	bindswitch --reload --locked lid:on exec swaylock \
     	--screenshots \
     	--clock \
@@ -362,16 +360,16 @@ imports =
     	--line-color 00000000 \
     	--inside-color 00000088 \
     	--separator-color 00000000 \
-    	--grace 2 
+    	--grace 2
 
-         for_each output * {
+        output eDP-1 {
           scale 1
           # background ~/Pictures/857455.jpg fill
         }
       '';
       config = {
-        modifier = "Mod4"; 
-        terminal = "kitty"; 
+        modifier = "Mod4";
+        terminal = "kitty";
         bars = [
           {
             position = "top";
@@ -379,7 +377,7 @@ imports =
           }
         ];
         startup = [
-          { command = "mako"; } 
+          { command = "mako"; }
         ];
 
         keybindings = {
@@ -472,7 +470,7 @@ imports =
     };
   };
 
-  programs = { 
+  programs = {
     sway = {
       enable = true;
       xwayland.enable = true;
