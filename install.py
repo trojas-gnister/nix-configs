@@ -25,7 +25,7 @@ configs = [
     },
     {
         "name": "host",
-        "configuration_path": "/home/nixos/nix-configs/host-config/host-config/configuration.nix",
+        "configuration_path": "/home/nixos/nix-configs/host-config/configuration.nix",
     },
 ]
 
