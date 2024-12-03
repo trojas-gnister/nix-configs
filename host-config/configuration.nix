@@ -2,20 +2,24 @@
 #TODO: swayfx
 #TODO: lock when lid closes 
 let
-  currentSystem = builtins.currentSystem;
-  isAarch64 = currentSystem == "aarch64-darwin";
-  isX86_64 = currentSystem == "x86_64-linux";
+  currentSystem = builtins.trace "Current system:" builtins.currentSystem;
+  isAarch64 = builtins.trace "Is Aarch64:" (currentSystem == "aarch64-darwin");
+  isX86_64 = builtins.trace "Is x86_64:" (currentSystem == "x86_64-linux");
   home-manager = builtins.fetchTarball {
     url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
   };
 in
 {
-  imports = [
 
-    (if isAarch64 then ./apple-silicon-support else null)
-    ./hardware-configuration.nix
+imports = 
+  (if isAarch64 then
+    [ ./apple-silicon-support ./hardware-configuration.nix ]
+   else
+    [ ./hardware-configuration.nix ]
+  ) ++ [
     (import "${home-manager}/nixos")
   ];
+
 
   boot = if isAarch64 then {
     loader = {
@@ -360,10 +364,10 @@ in
     	--separator-color 00000000 \
     	--grace 2 
 
-        # output eDP-1 {
-         # scale 1
+         for_each output * {
+          scale 1
           # background ~/Pictures/857455.jpg fill
-       # }
+        }
       '';
       config = {
         modifier = "Mod4"; 
