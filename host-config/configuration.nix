@@ -3,42 +3,44 @@
 #TODO: lock when lid closes
 let
   currentSystem = builtins.trace "Current system:" builtins.currentSystem;
-  isAarch64 = builtins.trace "Is Aarch64:" (currentSystem == "aarch64-darwin");
+  isAarch64 = builtins.trace "Is Aarch64:" (currentSystem == "aarch64-linux");
   isX86_64 = builtins.trace "Is x86_64:" (currentSystem == "x86_64-linux");
   home-manager = builtins.fetchTarball {
     url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
   };
 in
 {
+  imports = [
+    ./hardware-configuration.nix
+    (import "${home-manager}/nixos")
+  ] ++ lib.optionals isAarch64 [ ./apple-silicon-support ];
 
-imports =
-  (if isAarch64 then
-    [ ./apple-silicon-support ./hardware-configuration.nix (import "${home-manager}/nixos")]
-   else
-    [ ./hardware-configuration.nix (import "${home-manager}/nixos")]
+
+
+  boot = if isAarch64 then (
+    builtins.trace "Using Aarch64 boot configuration" {
+      loader = {
+        systemd-boot.enable = true;
+        efi.canTouchEfiVariables = false;
+      };
+    }
+  ) else (
+    builtins.trace "Using x86_64 boot configuration" {
+      loader = {
+        systemd-boot.enable = true;
+        efi.canTouchEfiVariables = true;
+      };
+      kernelModules = [ "kvm" "kvm_intel" ];
+      kernelParams = [ "intel_iommu=on" "iommu=pt" ];
+      initrd = {
+        kernelModules = [ "vfio_pci" "vfio" "vfio_iommu_type1" ];
+      };
+      extraModprobeConfig = ''
+        options vfio-pci ids=8086:15f3,10de:2484,10de:228b,144d:a808,8086:0094
+      '';
+      blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" ];
+    }
   );
-
-
-  boot = if isAarch64 then {
-    loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = false;
-    };
-  } else {
-    loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
-    };
-    kernelModules = [ "kvm" "kvm_intel" ];
-    kernelParams = [ "intel_iommu=on" "iommu=pt" ];
-    initrd = {
-      kernelModules = [ "vfio_pci" "vfio" "vfio_iommu_type1" ];
-    };
-    extraModprobeConfig = ''
-      options vfio-pci ids=8086:15f3,10de:2484,10de:228b,144d:a808,8086:0094
-    '';
-    blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" ];
-  };
 
   networking = {
     hostName =
@@ -77,11 +79,11 @@ imports =
 	enable = true;
 	extraConfig = ''
 	background-color=#00000080
-	border-color=#ffffff40    
-	text-color=#ffffff        
+	border-color=#ffffff40
+	text-color=#ffffff
 	font=Sans 14
 	default-timeout=5000
-	width=350                 
+	width=350
 	height=100
 	padding=10
 	margin=10
