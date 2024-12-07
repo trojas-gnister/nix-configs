@@ -9,16 +9,12 @@ import shutil
 
 configs = [
     {
-        "name": "browsing",
-        "configuration_path": "/home/nixos/nix-configs/app-configs/browsing/configuration.nix",
+        "name": "disposable",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/disposable/configuration.nix",
     },
     {
         "name": "steam-gaming",
         "configuration_path": "/home/nixos/nix-configs/app-configs/steam-gaming/configuration.nix",
-    },
-    {
-        "name": "non-steam-gaming",
-        "configuration_path": "/home/nixos/nix-configs/app-configs/non-steam-gaming/configuration.nix",
     },
     {
         "name": "development",
