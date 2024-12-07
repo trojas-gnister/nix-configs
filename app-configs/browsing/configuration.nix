@@ -16,35 +16,39 @@ in
     efi.canTouchEfiVariables = true;
   };
 
-  networking.hostName = "browsing";
+  networking.hostName = "disposable";
+
   time.timeZone = "America/Chicago";
 
+  hardware = {
+    firmware = [ pkgs.linux-firmware ];
+    bluetooth.enable = true;
+    bluetooth.powerOnBoot = true;
+  };
 
   services = {
-    xserver = {
+    blueman.enable = true;
+    xserver.enable = true;
+    xserver.displayManager.defaultSession = "none+i3";
+    xserver.displayManager.autoLogin.enable = true;
+    xserver.displayManager.autoLogin.user = "nixos";
+    xserver.displayManager.sddm.enable = true;
+
+    xserver.windowManager.i3 = {
       enable = true;
-      displayManager = {
-        autoLogin.enable = true;
-        autoLogin.user = "nixos";
-        sddm.enable = true;
-        defaultSession = "none+i3";
-      };
-      windowManager.i3 = {
-        enable = true;
-        extraPackages = with pkgs; [
-          dmenu
-          i3status
-          i3lock
-          i3blocks
-        ];
-      };
+      extraPackages = with pkgs; [
+        dmenu
+        i3status
+        i3lock
+        i3blocks
+      ];
     };
 
     openssh.enable = true;
-
     spice-vdagentd.enable = true;
     spice-autorandr.enable = true;
   };
+
   programs.git.enable = true;
 
   environment = {
@@ -52,6 +56,7 @@ in
       librewolf
       chromium
       qbittorrent
+      retroarchFull
       neovim
       spice-autorandr
       spice-vdagent
@@ -66,7 +71,6 @@ in
 
     pathsToLink = [ "/libexec" ];
   };
- 
 
   users.users.nixos = {
     isNormalUser = true;
@@ -82,15 +86,17 @@ in
 
     xsession.windowManager.i3 = {
       enable = true;
+      config = {
+      terminal = "kitty";
+      };
       extraConfig = ''
         set $mod Mod1
         font pango:DejaVu Sans Mono 8
         floating_modifier $mod
         exec librewolf
         exec spice-vdagent -x -d
-	for_window [class="^.*"] border pixel 0
-      
-       '';
+        for_window [class="^.*"] border pixel 0
+      '';
     };
 
     programs.librewolf = {
@@ -109,6 +115,9 @@ in
     };
   };
 
-  system.stateVersion = "24.11";
+  system = {
+    stateVersion = "24.11";
 
+    activationScripts.runRfkill.text = "rfkill unblock bluetooth";
+  };
 }
