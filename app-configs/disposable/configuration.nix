@@ -11,88 +11,80 @@ in
     (import "${home-manager}/nixos")
   ];
 
-
-  boot = {
-	loader  = {
-			systemd-boot.enable = true;
-			efi.canTouchEfiVariables = true;
-		};
-
-  	};
-  time.timeZone = "America/Chicago"; 
-   networking.hostName = "gaming";
-
-  programs = {
-    git.enable = true;
-    steam = {
-    enable = true;
-    remotePlay.openFirewall = true;
-    localNetworkGameTransfers.openFirewall = true;
-    };
+  boot.loader = {
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
   };
 
-hardware.opengl = {
-  enable = true;
-};
+  networking.hostName = "disposable";
 
+  time.timeZone = "America/Chicago";
 
-hardware.nvidia = {
-  modesetting.enable = true;
-  open = false;
-  package = config.boot.kernelPackages.nvidiaPackages.stable;
-};
+  hardware = {
+    firmware = [ pkgs.linux-firmware ];
+    bluetooth.enable = true;
+    bluetooth.powerOnBoot = true;
+  };
 
+  services = {
+    blueman.enable = true;
+    xserver.enable = true;
+    xserver.displayManager.defaultSession = "none+i3";
+    xserver.displayManager.autoLogin.enable = true;
+    xserver.displayManager.autoLogin.user = "nixos";
+    xserver.displayManager.sddm.enable = true;
 
-nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-  "retroarchFull"
-  "steam"
-  "steam-original"
-  "steam-unwrapped"
-  "steam-run"
-  "nvidia-x11"
-  "nvidia-settings"
-];
-	services = {
-		xserver =  {
-			enable = true;
-			videoDrivers = ["nvidia"];
-		displayManager = {
-				autoLogin.enable = true;
-				autoLogin.user = "nixos";
-				defaultSession = "plasmax11";
-				sddm.enable = true;
-				};
-		desktopManager = {
-				plasma6.enable = true;
-				};
-			};
-		openssh.enable = true;
-		spice-vdagentd.enable = true;
-		spice-autorandr.enable = true;
-		};
+    xserver.windowManager.i3 = {
+      enable = true;
+      extraPackages = with pkgs; [
+        dmenu
+        i3status
+        i3lock
+        i3blocks
+      ];
+    };
 
-  environment = { 
-  		
+    openssh.enable = true;
+    spice-vdagentd.enable = true;
+    spice-autorandr.enable = true;
+  };
 
-  		systemPackages = with pkgs; [
-    				librewolf
-    				neovim
-    				sunshine
-    				spice-autorandr
-    				spice-vdagent
-    				wl-clipboard
-    				openvpn
-    				kitty
-				retroarchFull
-  				];
-		variables = {
-    			GTK_THEME = "Adwaita:dark"; 
-  		};
-	};
+  programs.git.enable = true;
+
+  environment = {
+    systemPackages = with pkgs; [
+      librewolf
+      chromium
+      qbittorrent
+      retroarchFull
+      neovim
+      spice-autorandr
+      spice-vdagent
+      wl-clipboard
+      openvpn
+      kitty
+    ];
+
+    variables = {
+      GTK_THEME = "Adwaita:dark";
+    };
+
+    pathsToLink = [ "/libexec" ];
+  };
+
+  users.users.nixos = {
+    isNormalUser = true;
+    uid = 1000;
+    group = "users";
+    extraGroups = [ "wheel" ];
+    home = "/home/nixos";
+    shell = pkgs.bash;
+  };
 
   home-manager.users.nixos = { pkgs, ... }: {
-    home.stateVersion = "24.11"; 
-   xsession.windowManager.i3 = {
+    home.stateVersion = "24.11";
+
+    xsession.windowManager.i3 = {
       enable = true;
       config = {
       terminal = "kitty";
@@ -106,6 +98,7 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
         for_window [class="^.*"] border pixel 0
       '';
     };
+
     programs.librewolf = {
       enable = true;
       settings = {
@@ -122,16 +115,9 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     };
   };
 
-system.stateVersion = "24.11";
+  system = {
+    stateVersion = "24.11";
 
-  environment.pathsToLink = [ "/libexec" ];
-
-  users.users.nixos = {
-    isNormalUser = true;
-    uid = 1000;
-    group = "users";
-    extraGroups = [ "wheel" ];
-    home = "/home/nixos";
-    shell = pkgs.bash; 
+    activationScripts.runRfkill.text = "rfkill unblock bluetooth";
   };
 }
