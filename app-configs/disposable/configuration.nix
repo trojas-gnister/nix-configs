@@ -56,7 +56,6 @@ in
       librewolf
       chromium
       qbittorrent
-      retroarchFull
       neovim
       spice-autorandr
       spice-vdagent
