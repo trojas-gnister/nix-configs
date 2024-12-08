@@ -44,7 +44,9 @@ hardware.nvidia = {
 
 
 nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-  "retroarchFull"
+"libretro-snes9x"
+"libretro-beetle-psx-hw"
+"libretro-genesis-plus-gx"
   "steam"
   "steam-original"
   "steam-unwrapped"
@@ -83,7 +85,13 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     				wl-clipboard
     				openvpn
     				kitty
-				retroarchFull
+				 (retroarch.override {
+    cores = with libretro; [
+      genesis-plus-gx
+      snes9x
+      beetle-psx-hw
+    ];
+  })
   				];
 		variables = {
     			GTK_THEME = "Adwaita:dark"; 
