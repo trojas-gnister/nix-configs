@@ -11,48 +11,30 @@ in
     (import "${home-manager}/nixos")
   ];
 
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
 
+  boot = {
+	loader  = {
+			systemd-boot.enable = true;
+			efi.canTouchEfiVariables = true;
+		};
+
+  	};
   time.timeZone = "America/Chicago"; 
+   networking.hostName = "gaming";
 
-  services.openssh.enable = true;
-
-  programs.git.enable = true;
-    programs.steam = {
+  programs = {
+    git.enable = true;
+    steam = {
     enable = true;
     remotePlay.openFirewall = true;
     localNetworkGameTransfers.openFirewall = true;
-  };
-  environment.systemPackages = with pkgs; [
-    pkgs.librewolf
-    neovim
-    pkgs.sunshine
-    spice-autorandr
-    spice-vdagent
-    wl-clipboard
-    openvpn
-    kitty
-  ];
-
-  services.xserver = {
-    enable = true;
-    displayManager = {
-      autoLogin.enable = true;
-      autoLogin.user = "nixos";
-      sddm.enable = true;
-      defaultSession = "plasmax11";
     };
-    desktopManager.plasma6.enable = true;
   };
-
-
 
 hardware.opengl = {
   enable = true;
 };
 
-services.xserver.videoDrivers = ["nvidia"];
 
 hardware.nvidia = {
   modesetting.enable = true;
@@ -62,25 +44,68 @@ hardware.nvidia = {
 
 
 nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+  "retroarchFull"
   "steam"
   "steam-original"
-  "steam-unwrapoped"
+  "steam-unwrapped"
   "steam-run"
   "nvidia-x11"
   "nvidia-settings"
 ];
+	services = {
+		xserver =  {
+			enable = true;
+			videoDrivers = ["nvidia"];
+		displayManager = {
+				autoLogin.enable = true;
+				autoLogin.user = "nixos";
+				defaultSession = "plasmax11";
+				sddm.enable = true;
+				};
+		desktopManager = {
+				plasma6.enable = true;
+				};
+			};
+		openssh.enable = true;
+		spice-vdagentd.enable = true;
+		spice-autorandr.enable = true;
+		};
 
-  hardware.pulseaudio.enable = true;
-  services.spice-vdagentd.enable = true;
-  services.spice-autorandr.enable = true;
+  environment = { 
+  		
 
-  environment.variables = {
-    GTK_THEME = "Adwaita:dark"; 
-  };
+  		systemPackages = with pkgs; [
+    				librewolf
+    				neovim
+    				sunshine
+    				spice-autorandr
+    				spice-vdagent
+    				wl-clipboard
+    				openvpn
+    				kitty
+				retroarchFull
+  				];
+		variables = {
+    			GTK_THEME = "Adwaita:dark"; 
+  		};
+	};
 
   home-manager.users.nixos = { pkgs, ... }: {
-    home.stateVersion = "24.05"; 
-
+    home.stateVersion = "24.11"; 
+   xsession.windowManager.i3 = {
+      enable = true;
+      config = {
+      terminal = "kitty";
+      };
+      extraConfig = ''
+        set $mod Mod1
+        font pango:DejaVu Sans Mono 8
+        floating_modifier $mod
+        exec librewolf
+        exec spice-vdagent -x -d
+        for_window [class="^.*"] border pixel 0
+      '';
+    };
     programs.librewolf = {
       enable = true;
       settings = {
@@ -97,7 +122,7 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     };
   };
 
-  system.stateVersion = "24.05";
+system.stateVersion = "24.11";
 
   environment.pathsToLink = [ "/libexec" ];
 
