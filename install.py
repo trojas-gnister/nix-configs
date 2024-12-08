@@ -13,8 +13,8 @@ configs = [
         "configuration_path": "/home/nixos/nix-configs/app-configs/disposable/configuration.nix",
     },
     {
-        "name": "steam-gaming",
-        "configuration_path": "/home/nixos/nix-configs/app-configs/steam-gaming/configuration.nix",
+        "name": "gaming",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/gaming/configuration.nix",
     },
     {
         "name": "development",
