@@ -6,7 +6,7 @@ let
   isAarch64 = builtins.trace "Is Aarch64:" (currentSystem == "aarch64-linux");
   isX86_64 = builtins.trace "Is x86_64:" (currentSystem == "x86_64-linux");
   home-manager = builtins.fetchTarball {
-    url = "https://github.com/nix-community/home-manager/archive/release-24.11.tar.gz";
+    url = "https://github.com/nix-community/home-manager/archive/master.tar.gz";
   };
 in
 {
@@ -23,9 +23,23 @@ in
         systemd-boot.enable = true;
         efi.canTouchEfiVariables = false;
       };
+      # kernelModules = [ "kvm" ];
+      # kernelParams = [ "iommu=pt" ];
+      # initrd = {
+      #   kernelModules = [ "vfio_pci" "vfio" "vfio_iommu_type1" ];
+      # };
+      # extraModprobeConfig = ''
+      #   options vfio-pci ids=14e4:5f69
+      # '';
+      #
     }
   ) else (
     builtins.trace "Using x86_64 boot configuration" {
+      kernel.sysctl = {
+    # "net.ipv4.ip_forward" = true;
+    # "net.ipv6.conf.all.forwarding" = true;
+  };
+
       loader = {
         systemd-boot.enable = true;
         efi.canTouchEfiVariables = true;
@@ -43,11 +57,43 @@ in
   );
 
   networking = {
+    nat = {
+    enable = true;
+    internalInterfaces = [ "virbr0" ];
+    externalInterface = "wlp1s0f0";
+    };
     hostName =
     if isAarch64
       then "headspace"
       else "whitespace";
     networkmanager.enable = true;
+	firewall = {
+	enable = true;
+	   extraCommands = ''
+      # Allow loopback traffic
+      iptables -A INPUT -i lo -j ACCEPT
+      iptables -A OUTPUT -o lo -j ACCEPT
+
+      # Allow established and related connections
+      iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+      iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+      # Drop all other outbound traffic from the host
+      iptables -A OUTPUT -o wlp1s0f0 -j DROP
+    '';
+  #   extraCommands = ''
+  #   # Flush NAT table to avoid conflicts with existing chains
+  #   iptables -t nat -F
+  #
+  #   # Enable NAT for the VM network
+  #   iptables -t nat -A POSTROUTING -s 192.168.122.0/24 -o eth0 -j MASQUERADE
+  #
+  #   # Allow forwarding rules
+  #   iptables -A FORWARD -i virbr0 -o eth0 -s 192.168.122.0/24 -j ACCEPT
+  #   iptables -A FORWARD -i eth0 -o virbr0 -d 192.168.122.0/24 \
+  #       -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  # '';
+	  };
   };
 
   time.timeZone = "America/Chicago";
@@ -72,8 +118,8 @@ in
   };
 
   home-manager.users.iskry = { pkgs, ... }: {
-    home.stateVersion = "24.11";
-
+    home.stateVersion = "25.05";
+    home.packages = [ pkgs.virt-manager ];
     programs = {
       mako = {
 	enable = true;
@@ -388,8 +434,8 @@ in
           "Mod4+d" = "exec dmenu_run";
           "Mod4+Shift+c" = "reload";
           "Mod4+Shift+e" = "exec swaynag -t warning -m 'Exit sway?' -B 'Yes' 'swaymsg exit'";
-	        "XF86MonBrightnessUp" = "exec brightnessctl -d apple-panel-bl set +10%";
-	        "XF86MonBrightnessDown" = "exec brightnessctl -d apple-panel-bl set 10%-";
+	       "XF86MonBrightnessUp" = "exec brightnessctl -d apple-panel-bl set +10%";
+	       "XF86MonBrightnessDown" = "exec brightnessctl -d apple-panel-bl set 10%-";
           # Navigation
           "Mod4+h" = "focus left";
           "Mod4+j" = "focus down";
@@ -399,28 +445,28 @@ in
           "Mod4+Shift+j" = "move down";
           "Mod4+Shift+k" = "move up";
           "Mod4+Shift+l" = "move right";
-	 "Mod4+1" = "workspace 1";
-  	 "Mod4+2" = "workspace 2";
-	 "Mod4+3" = "workspace 3";
-  	 "Mod4+4" = "workspace 4";
-  	 "Mod4+5" = "workspace 5";
-  	 "Mod4+6" = "workspace 6";
-  	 "Mod4+7" = "workspace 7";
-  	 "Mod4+8" = "workspace 8";
-  	 "Mod4+9" = "workspace 9";
-  	 "Mod4+0" = "workspace 10";
-	 "Ctrl+Left" = "workspace prev";
-	 "Ctrl+Right" = "workspace next";
-	 "Mod4+Shift+1" = "move container to workspace number 1";
-	 "Mod4+Shift+2" = "move container to workspace number 2";
-	 "Mod4+Shift+3" = "move container to workspace number 3";
-	 "Mod4+Shift+4" = "move container to workspace number 4";
-	 "Mod4+Shift+5" = "move container to workspace number 5";
-	 "Mod4+Shift+6" = "move container to workspace number 6";
-  	 "Mod4+Shift+7" = "move container to workspace number 7";
-	 "Mod4+Shift+8" = "move container to workspace number 8";
-	 "Mod4+Shift+9" = "move container to workspace number 9";
-	 "Mod4+Shift+0" = "move container to workspace number 10";
+	"Mod4+1" = "workspace 1";
+  	"Mod4+2" = "workspace 2";
+	"Mod4+3" = "workspace 3";
+  	"Mod4+4" = "workspace 4";
+  	"Mod4+5" = "workspace 5";
+  	"Mod4+6" = "workspace 6";
+  	"Mod4+7" = "workspace 7";
+  	"Mod4+8" = "workspace 8";
+  	"Mod4+9" = "workspace 9";
+  	"Mod4+0" = "workspace 10";
+	"Ctrl+Left" = "workspace prev";
+	"Ctrl+Right" = "workspace next";
+	"Mod4+Shift+1" = "move container to workspace number 1";
+	"Mod4+Shift+2" = "move container to workspace number 2";
+	"Mod4+Shift+3" = "move container to workspace number 3";
+	"Mod4+Shift+4" = "move container to workspace number 4";
+	"Mod4+Shift+5" = "move container to workspace number 5";
+	"Mod4+Shift+6" = "move container to workspace number 6";
+  	"Mod4+Shift+7" = "move container to workspace number 7";
+	"Mod4+Shift+8" = "move container to workspace number 8";
+	"Mod4+Shift+9" = "move container to workspace number 9";
+	"Mod4+Shift+0" = "move container to workspace number 10";
 	};
       };
     };
@@ -470,15 +516,19 @@ in
         user = "iskry";
       };
     };
+    pipewire = {
+      enable = true;
+      pulse.enable = true;
+    };
   };
-
   programs = {
-    sway = {
+
+  dconf.enable = true;
+  sway = {
       enable = true;
       xwayland.enable = true;
     };
   };
-
   security = {
     polkit.enable = true;
     pam = {
