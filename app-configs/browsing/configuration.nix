@@ -30,7 +30,6 @@ in
   };
   mullvad-vpn.enable = true;
   mullvad-vpn.package = pkgs.mullvad-vpn;
-    blueman.enable = true;
     xserver.enable = true;
     xserver.displayManager.defaultSession = "none+i3";
     xserver.displayManager.autoLogin.enable = true;
