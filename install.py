@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#TODO: convert to Pydantic? Can I still use an executable script. This is for typing
+#TODO: rewrite in rust
 
 import subprocess
 import sys
