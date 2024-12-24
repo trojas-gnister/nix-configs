@@ -16,15 +16,9 @@ in
     efi.canTouchEfiVariables = true;
   };
 
-  networking.hostName = "disposable";
+  networking.hostName = "torrent";
 
   time.timeZone = "America/Chicago";
-
-  hardware = {
-    firmware = [ pkgs.linux-firmware ];
-    bluetooth.enable = true;
-    bluetooth.powerOnBoot = true;
-  };
 
   services = {
   resolved = {
@@ -59,7 +53,6 @@ in
   environment = {
     systemPackages = with pkgs; [
       librewolf
-      chromium
       qbittorrent
       neovim
       spice-autorandr
@@ -124,13 +117,9 @@ services.pipewire = {
   alsa.enable = true;
   alsa.support32Bit = true;
   pulse.enable = true;
-  # If you want to use JACK applications, uncomment this
-  #jack.enable = true;
 };
 
   system = {
     stateVersion = "24.11";
-
-    activationScripts.runRfkill.text = "rfkill unblock bluetooth";
   };
 }
