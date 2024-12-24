@@ -9,8 +9,16 @@ import shutil
 
 configs = [
     {
-        "name": "disposable",
-        "configuration_path": "/home/nixos/nix-configs/app-configs/disposable/configuration.nix",
+        "name": "browsing",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/browsing/configuration.nix",
+    },
+    {
+        "name": "jellyfin",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/jellyfin/configuration.nix",
+    },
+    {
+        "name": "torrent",
+        "configuration_path": "/home/nixos/nix-configs/app-configs/torrent/configuration.nix",
     },
     {
         "name": "gaming",
