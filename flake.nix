@@ -91,7 +91,7 @@
             userName = variables.userName;
           })
           ./pipewire-configuration.nix           
-          ./openssh-configuration.nix  
+          ./services/openssh-configuration.nix  
           home-manager.nixosModules.home-manager
           {
             imports = [
@@ -133,8 +133,8 @@
           userName = variables.userName;
           dataDevice = variables.dataDevice;
         })
-          ./pipewire-configuration.nix  
-          ./openssh-configuration.nix 
+          ./services/pipewire-configuration.nix  
+          ./services/openssh-configuration.nix 
           home-manager.nixosModules.home-manager
           {
             networking = {
@@ -154,10 +154,10 @@
          (import ./display-configuration.nix {
           userName = variables.userName;
         })
-          ./librewolf-flake.nix
-          ./chromium-flake.nix
-          ./pipewire-configuration.nix  
-          ./openssh-configuration.nix 
+          ./applications/librewolf-flake.nix
+          ./applications/chromium-flake.nix
+          ./services/pipewire-configuration.nix  
+          ./services/openssh-configuration.nix 
         {
           networking = {
             hostName = variables.hostName;
@@ -180,8 +180,8 @@
           ./applications/librewolf.nix
           ./applications/qbittorrent.nix
           ./applications/vpn.nix
-          ./pipewire-configuration.nix  
-          ./openssh-configuration.nix 
+          ./services/pipewire-configuration.nix  
+          ./services/openssh-configuration.nix 
         {
           networking = {
             hostName = variables.hostName;
