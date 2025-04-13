@@ -1,6 +1,6 @@
 .git
-variables.nix
-flake.lock
-firmware
-apple-silicon-support
-hardware-configuration.nix
+**/variables.nix
+**/flake.lock
+**/firmware
+**/apple-silicon-support
+**/hardware-configuration.nix
