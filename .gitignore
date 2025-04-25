@@ -1,4 +1,5 @@
 .git
+variables.nix
 **/variables.nix
 **/flake.lock
 **/firmware

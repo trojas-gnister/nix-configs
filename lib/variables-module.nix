@@ -1,12 +1,49 @@
-# lib/variables-module.nix
 { config, lib, pkgs, ... }:
-
 with lib;
-
 let
   cfg = config.variables;
 in {
   options.variables = {
+      steamdeck = {
+      handheld = {
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = "Whether this is a handheld device";
+        };
+        screenSize = mkOption {
+          type = types.float;
+          description = "Screen size in inches";
+        };
+        resolution = {
+          width = mkOption {
+            type = types.int;
+            description = "Screen width in pixels";
+          };
+          height = mkOption {
+            type = types.int;
+            description = "Screen height in pixels";
+          };
+        };
+      };
+      power = {
+        tdp = mkOption {
+          type = types.int;
+          description = "Thermal Design Power in watts";
+        };
+        battery = {
+          capacity = mkOption {
+            type = types.int;
+            description = "Battery capacity in watt-hours";
+          };
+          saveMode = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable battery saver mode";
+          };
+        };
+      };
+    };
     networking = {
       staticIP = mkOption {
         type = types.str;
@@ -24,8 +61,13 @@ in {
         type = types.str;
         description = "Hostname";
       };
+      leviathan = {
+        hostname = mkOption {
+          type = types.str;
+          description = "Steam Deck hostname";
+        };
+      };
     };
-    
     ssh = {
       initrd = {
         port = mkOption {
@@ -42,7 +84,6 @@ in {
         };
       };
     };
-    
     user = {
       name = mkOption {
         type = types.str;
@@ -53,7 +94,6 @@ in {
         description = "User groups";
       };
     };
-
     firewall = {
       openTCPPorts = mkOption {
         type = types.listOf types.int;
