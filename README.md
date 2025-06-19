@@ -82,12 +82,11 @@ To build and activate a configuration for a specific host, run the following com
 ```bash
 # Replace <hostname> with either 'whitespace' or 'leviathan'
 sudo nixos-rebuild switch --flake .#<hostname>
-```
 
+```
 For example, to deploy the whitespace configuration:
 
 `sudo nixos-rebuild switch --flake .#whitespace`
-
 
 ## Contributing and Requesting Changes
 While this is my personal setup, I welcome suggestions for improvements or new features!
