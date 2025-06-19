@@ -1,4 +1,3 @@
-# modules/common/firewall.nix
 { config, lib, pkgs, ... }:
 {
   networking.firewall = {
@@ -6,5 +5,7 @@
     allowedTCPPorts = config.variables.firewall.openTCPPorts;
     allowedUDPPorts = config.variables.firewall.openUDPPorts;
     allowedUDPPortRanges = config.variables.firewall.openUDPPortRanges;
+
+    trustedInterfaces = config.variables.firewall.trustedInterfaces;
   };
 }

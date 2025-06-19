@@ -1,34 +1,30 @@
-# hosts/pc.nix
 { config, lib, pkgs, ... }:
 
 {
   imports = [
-    ../hardware-configuration.nix # Assuming this is relevant for pc
-    ../variables.nix
   ];
 
   nix.settings.experimental-features = ["nix-command" "flakes"];
-  programs.adb.enable = true; # Example existing setting
+  programs.adb.enable = true;
   networking.hostName = config.variables.networking.hostname;
-  system.stateVersion = "24.11"; # Adjust as needed
-
-  # Enable system-level Podman support (subuid/gid maps etc.)
-  virtualisation.podman.enable = true;
+  system.stateVersion = "24.11";
 
   boot = {
     loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
+
     kernelModules = [ "kvm" "kvm_intel" ];
     kernelParams = [
       "intel_iommu=on"
       "iommu=pt"
-      "ip=${config.variables.networking.staticIP}::${config.variables.networking.gateway}:${config.variables.networking.netmask}:nixos-server:enp6s0:none"
-    ];
-    initrd = {
-      availableKernelModules = [ "igc" ];
-      kernelModules = [ "vfio_pci" "vfio" "vfio_iommu_type1" ];
+    ] ++ lib.optional (config.variables.networking.staticIP != "")
+         "ip=${config.variables.networking.staticIP}::${config.variables.networking.gateway}:${config.variables.networking.netmask}:${config.variables.networking.hostname}:enp6s0:none";
+
+    initrd = lib.optionalAttrs (config.variables.ssh.initrd.hostKeyPath != "") {
+      availableKernelModules = [ "igc" "vfio_pci" "vfio" "vfio_iommu_type1" ];
+      kernelModules = [ ];
       network = {
         enable = true;
         postCommands = ''
@@ -43,7 +39,4 @@
       };
     };
   };
-
-  # Ensure only one session/window manager is primary if needed
-  # services.xserver.displayManager.defaultSession = "none+i3"; # Example setting
 }

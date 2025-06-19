@@ -1,24 +1,24 @@
-# modules/common/user.nix
 { config, lib, pkgs, ... }:
 
 {
+  users.groups.container-devices = {};
+
   users.users.${config.variables.user.name} = {
     isNormalUser = true;
-    extraGroups = config.variables.user.groups;
+    extraGroups = config.variables.user.groups ++ [ "container-devices" ];
     packages = with pkgs; [
-      neovim
       tmux
-      wl-clipboard
       btop
-      qemu
-      virt-manager
-      wget
-      moonlight-qt
-      dconf
-      lunarvim
       brightnessctl
     ];
   };
+
+  services.udev.extraRules = ''
+    KERNEL=="dri/*", GROUP="container-devices", MODE="0660"
+    KERNEL=="renderD*", GROUP="container-devices", MODE="0660"
+    KERNEL=="uinput", GROUP="container-devices", MODE="0660"
+    KERNEL=="input/*", GROUP="container-devices", MODE="0660"
+  '';
 
   programs.git.enable = true;
 }

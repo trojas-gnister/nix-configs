@@ -1,4 +1,4 @@
-{ config, lib, pkgs, inputs ? {}, ... }:
+{ config, lib, pkgs, ... }:
 {
   programs.steam = {
     enable = true;
@@ -8,11 +8,19 @@
     gamescopeSession.enable = true;
   };
 
-  # This part allowing unfree packages for Steam is correct
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam"
-    "steam-original"
-    "steam-unwrapped"
-    "steam-run"
-  ];
+  programs.gamescope = {
+    enable = true;
+    capSysNice = true;
+  };
+
+  home-manager.users.${config.variables.user.name} = {
+    xdg.desktopEntries."gs-launcher" = {
+      name = "Gamescope Steam";
+      comment = "Launch Steam in a Gamescope session";
+      exec = "gs-launcher";
+      icon = "steam";
+      terminal = false;
+      categories = [ "Game" ];
+    };
+  };
 }

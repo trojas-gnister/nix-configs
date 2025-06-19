@@ -4,322 +4,138 @@
   home-manager.users.${config.variables.user.name} = { pkgs, ... }: {
     programs.waybar = {
       enable = true;
+      package = pkgs.waybar.override { swaySupport = true; };
       settings = {
         mainBar = {
           layer = "top";
           position = "top";
           height = 30;
           spacing = 4;
-          
-          modules-left = [
-            "hyprland/workspaces"
-            "hyprland/mode"
-          ];
-          
-          modules-center = [
-            "hyprland/window"
-          ];
-          
+
+          modules-left = [ "sway/workspaces" "sway/mode" ];
+          modules-center = [ "sway/window" ];
           modules-right = [
-	    "custom/term"
+            "custom/rotate"
+            "custom/term"
             "custom/launcher"
             "custom/keyboard"
-            "network"
             "cpu"
             "memory"
             "battery"
             "clock"
             "tray"
           ];
-          
-          "hyprland/workspaces" = {
-            "disable-scroll" = false;
-            "all-outputs" = true;
-            "format" = "{name}";
-            "format-icons" = {
-              "1" = "1";
-              "2" = "2";
-              "3" = "3";
-              "4" = "4";
-              "5" = "5";
-              "urgent" = "";
-              "focused" = "";
-              "default" = "";
+
+          "sway/workspaces" = {
+            disable-scroll = false;
+            all-outputs = true;
+            format = "[{name}]";
+            format-icons = {
+              "1" = "[1]"; "2" = "[2]"; "3" = "[3]"; "4" = "[4]"; "5" = "[5]";
+              "urgent" = "[!]";
+              "focused" = "[*]";
+              "default" = "[ ]";
             };
           };
-          
-          "hyprland/mode" = {
-            "format" = "<span style=\"italic\">{}</span>";
-          };
-          
-          "hyprland/window" = {
-            "format" = "{title}";
-            "max-length" = 50;
-          };
-          
+
+          "sway/mode".format = "<span style=\"italic\">{}</span>";
+          "sway/window".format = "{title}";
+          "sway/window".max-length = 50;
+
           "custom/launcher" = {
-            "format" = "☰";
-            "tooltip" = "Applications";
-            "on-click" = "pkill wofi || wofi --show drun";
+            type = "custom/script";
+            exec = "echo MENU";
+            on-click = "toggle-rofi";
           };
-          
           "custom/keyboard" = {
-            "format" = "⌨";
-            "tooltip" = "Toggle virtual keyboard";
-            "on-click" = "pkill -x wvkbd-mobintl || wvkbd-mobintl -L 500";
+            type = "custom/script";
+            exec = "echo KB";
+            on-click = "pkill -x wvkbd-mobintl || ${pkgs.wvkbd}/bin/wvkbd-mobintl -H 600 -L 400 &";
           };
-         
-	 "custom/term" = {
-	   "format" = "🖥️";
-	   "tooltip" = "Launch terminal";
-	   "on-click" = "kitty";
-
-
-	 };
-
-
-          "network" = {
-            "format-wifi" = "{essid} ({signalStrength}%) ";
-            "format-ethernet" = "{ipaddr}/{cidr} ";
-            "tooltip-format" = "{ifname} via {gwaddr} ";
-            "format-linked" = "{ifname} (No IP) ";
-            "format-disconnected" = "Disconnected ⚠";
-            "format-alt" = "{ifname}: {ipaddr}/{cidr}";
+          "custom/term" = {
+            type = "custom/script";
+            exec = "echo TERM";
+            on-click = "kitty";
           };
-          
+          "custom/rotate" = {
+            type = "custom/script";
+            exec = "echo ROT";
+            on-click = "rotate-sway";
+          };
+
           "cpu" = {
-            "format" = "{usage}% ";
-            "tooltip" = false;
+            interval = 2;
+            format = "CPU {usage}%";
           };
-          
           "memory" = {
-            "format" = "{}% ";
+            interval = 5;
+            format = "MEM {percentage}%";
           };
-          
           "battery" = {
-            "states" = {
-              "good" = 95;
-              "warning" = 30;
-              "critical" = 15;
-            };
-            "format" = "{capacity}% {icon}";
-            "format-charging" = "{capacity}% ";
-            "format-plugged" = "{capacity}% ";
-            "format-alt" = "{time} {icon}";
-            "format-icons" = ["" "" "" "" ""];
+            battery = "BAT0";
+            adapter = "AC";
+            full-at = 98;
+            poll-interval = 5;
+            format-charging = "BAT {capacity}%";
+            format-discharging = "BAT {capacity}%";
+            format-full = "BAT {capacity}%";
           };
-          
           "clock" = {
-            "tooltip-format" = "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>";
-            "format" = "{:%I:%M %p}";
-            "format-alt" = "{:%Y-%m-%d}";
+            interval = 1;
+            format = "TIME {:%I:%M %p}";
+            format-alt = "DATE {:%Y-%m-%d}";
+            tooltip-format = "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>";
           };
-          
-          "tray" = {
-            "spacing" = 10;
-          };
+          "tray".spacing = 10;
         };
       };
-      
+
       style = ''
         * {
-          /* "Noto Sans" */
-          font-family: FontAwesome, Roboto, Helvetica, Arial, sans-serif;
-          font-size: 13px;
+          font-family: monospace;
+          font-size: 12px;
         }
-
         window#waybar {
-          background-color: rgba(43, 48, 59, 0.8);
-          border-bottom: 3px solid rgba(100, 114, 125, 0.5);
-          color: #ffffff;
-          transition-property: background-color;
-          transition-duration: .5s;
+          background-color: #1e1e2e;
+          border-bottom: 3px solid #44475a;
+          color: #f8f8f2;
         }
+        button { border: none; border-radius: 0; }
+        #workspaces button { padding: 0 5px; background: transparent; color: #f8f8f2; }
+        #workspaces button.focused { background-color: #44475a; }
+        #workspaces button.urgent { background-color: #ff5555; }
+        #mode { background-color: #6272a4; }
 
-        window#waybar.hidden {
-          opacity: 0.2;
-        }
-
-        button {
-          /* Use box-shadow instead of border so the text isn't offset */
-          box-shadow: inset 0 -3px transparent;
-          /* Avoid rounded borders under each button name */
-          border: none;
-          border-radius: 0;
-        }
-
-        /* https://github.com/Alexays/Waybar/wiki/FAQ#the-workspace-buttons-have-a-strange-hover-effect */
-        button:hover {
-          background: inherit;
-          box-shadow: inset 0 -3px #ffffff;
-        }
-
-        #workspaces button {
-          padding: 0 5px;
-          background-color: transparent;
-          color: #ffffff;
-        }
-
-        #workspaces button:hover {
-          background: rgba(0, 0, 0, 0.2);
-        }
-
-        #workspaces button.focused {
-          background-color: #64727D;
-          box-shadow: inset 0 -3px #ffffff;
-        }
-
-        #workspaces button.urgent {
-          background-color: #eb4d4b;
-        }
-
-        #mode {
-          background-color: #64727D;
-          border-bottom: 3px solid #ffffff;
-        }
-
-        #custom-launcher {
+        #custom-launcher, #custom-keyboard, #custom-term, #custom-rotate {
           padding: 0 10px;
-          color: #ffffff;
-          background-color: #5c636e;
+          background-color: #44475a;
         }
 
-        #custom-launcher:hover {
-          background-color: #3f4753;
-          box-shadow: inset 0 -3px #ffffff;
-        }
-
-        #custom-keyboard {
+        #clock, #battery, #cpu, #memory, #tray {
           padding: 0 10px;
-          color: #ffffff;
-          background-color: #64727D;
+          background-color: #44475a;
         }
 
-        #custom-keyboard:hover {
-          background-color: #505b66;
-          box-shadow: inset 0 -3px #ffffff;
-        }
-
-
-
-        #custom-term {                                                          padding: 0 10px;
-          color: #ffffff;
-          background-color: #64727D;                                          }
-                                                                              #custom-term:hover {
-          background-color: #505b66;
-          box-shadow: inset 0 -3px #ffffff;
-        }
-
-
-        #clock,
-        #battery,
-        #cpu,
-        #memory,
-        #disk,
-        #temperature,
-        #backlight,
-        #network,
-        #pulseaudio,
-        #wireplumber,
-        #custom-media,
-        #tray,
-        #mode,
-        #idle_inhibitor,
-        #scratchpad,
-        #mpd {
-          padding: 0 10px;
-          color: #ffffff;
-        }
-
-        #window,
-        #workspaces {
-          margin: 0 4px;
-        }
-
-        /* If workspaces is the leftmost module, omit left margin */
-        .modules-left > widget:first-child > #workspaces {
-          margin-left: 0;
-        }
-
-        /* If workspaces is the rightmost module, omit right margin */
-        .modules-right > widget:last-child > #workspaces {
-          margin-right: 0;
-        }
-
-        #clock {
-          background-color: #64727D;
-        }
-
-        #battery {
-          background-color: #ffffff;
+        #battery.charging {
+          background-color: #50fa7b;
           color: #000000;
         }
-
-        #battery.charging, #battery.plugged {
-          color: #ffffff;
-          background-color: #26A65B;
+        #battery.critical:not(.charging) {
+          background-color: #ff5555;
+          animation: blink 0.5s linear infinite alternate;
         }
-
         @keyframes blink {
           to {
             background-color: #ffffff;
             color: #000000;
           }
         }
-
-        #battery.critical:not(.charging) {
-          background-color: #f53c3c;
-          color: #ffffff;
-          animation-name: blink;
-          animation-duration: 0.5s;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-          animation-direction: alternate;
-        }
-
-        label:focus {
-          background-color: #000000;
-        }
-
-        #cpu {
-          background-color: #2ecc71;
-          color: #000000;
-        }
-
-        #memory {
-          background-color: #9b59b6;
-        }
-
-        #disk {
-          background-color: #964B00;
-        }
-
-        #network {
-          background-color: #2980b9;
-        }
-
-        #network.disconnected {
-          background-color: #f53c3c;
-        }
-
-        #tray {
-          background-color: #2980b9;
-        }
-
-        #tray > .passive {
-          -gtk-icon-effect: dim;
-        }
-
-        #tray > .needs-attention {
-          -gtk-icon-effect: highlight;
-          background-color: #eb4d4b;
-        }
       '';
     };
-    
-    # Ensure font-awesome is available for icons
+
     home.packages = with pkgs; [
-      font-awesome
+      procps
+      wvkbd
     ];
   };
 }
