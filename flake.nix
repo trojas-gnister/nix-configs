@@ -15,6 +15,16 @@
   let
     allSystems = [ "x86_64-linux" ];
     forAllSystems = nixpkgs.lib.genAttrs allSystems;
+
+    customIso = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        (import ./iso.nix { pkgs = nixpkgs.legacyPackages.x86_64-linux; inherit nixpkgs; })
+      ];
+    };
+
+    customIsoImage = customIso.config.system.build.isoImage;
+
   in
   {
     packages = forAllSystems (system:
@@ -32,7 +42,7 @@
     nixosConfigurations = {
       whitespace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit self NixVirt; };
+        specialArgs = { inherit self NixVirt customIsoImage; };
         modules = [
           ./hardware-configuration.nix
           ./variables.nix
@@ -57,6 +67,7 @@
           ./modules/common/sway.nix
           ./modules/common/waybar.nix
           ./modules/common/mako.nix
+          ./modules/vms/vm-generator.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
               dconf.settings = {

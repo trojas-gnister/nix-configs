@@ -8,52 +8,50 @@ in {
       system = mkOption {
         type = types.listOf types.str;
         default = [];
-        description = "List of system-wide package names to install via environment.systemPackages.";
       };
       homeManager = mkOption {
         type = types.listOf types.str;
         default = [];
-        description = "List of package names to install for the user via Home Manager (home.packages).";
       };
     };
     steamdeck = {
       handheld = {
-        enable = mkOption { type = types.bool; default = false; description = "Whether this is a handheld device"; };
-        screenSize = mkOption { type = types.float; description = "Screen size in inches"; };
+        enable = mkOption { type = types.bool; default = false; };
+        screenSize = mkOption { type = types.float; };
         resolution = {
-          width = mkOption { type = types.int; description = "Screen width in pixels"; };
-          height = mkOption { type = types.int; description = "Screen height in pixels"; };
+          width = mkOption { type = types.int; };
+          height = mkOption { type = types.int; };
         };
       };
       power = {
-        tdp = mkOption { type = types.int; description = "Thermal Design Power in watts"; };
+        tdp = mkOption { type = types.int; };
         battery = {
-          capacity = mkOption { type = types.int; description = "Battery capacity in watt-hours"; };
-          saveMode = mkOption { type = types.bool; default = false; description = "Enable battery saver mode"; };
+          capacity = mkOption { type = types.int; };
+          saveMode = mkOption { type = types.bool; default = false; };
         };
       };
     };
     networking = {
-      staticIP = mkOption { type = types.str; description = "Static IP address for the host"; default = ""; };
-      gateway = mkOption { type = types.str; description = "Gateway address"; default = ""; };
-      netmask = mkOption { type = types.str; description = "Network mask"; default = ""; };
-      hostname = mkOption { type = types.str; description = "Hostname"; };
-      leviathan = { hostname = mkOption { type = types.str; description = "Steam Deck hostname"; }; };
+      staticIP = mkOption { type = types.str; default = ""; };
+      gateway = mkOption { type = types.str; default = ""; };
+      netmask = mkOption { type = types.str; default = ""; };
+      hostname = mkOption { type = types.str; };
+      leviathan = { hostname = mkOption { type = types.str; }; };
     };
     ssh = {
       initrd = {
-        port = mkOption { type = types.port; description = "SSH port for initrd"; default = 0; };
-        hostKeyPath = mkOption { type = types.str; description = "Path to the SSH host key"; default = ""; };
-        authorizedKeys = mkOption { type = types.listOf types.str; description = "Authorized SSH keys"; default = []; };
+        port = mkOption { type = types.port; default = 0; };
+        hostKeyPath = mkOption { type = types.str; default = ""; };
+        authorizedKeys = mkOption { type = types.listOf types.str; default = []; };
       };
     };
     user = {
-      name = mkOption { type = types.str; description = "Primary user name"; };
-      groups = mkOption { type = types.listOf types.str; description = "User groups"; default = []; };
+      name = mkOption { type = types.str; };
+      groups = mkOption { type = types.listOf types.str; default = []; };
     };
     firewall = {
-      openTCPPorts = mkOption { type = types.listOf types.port; description = "Open TCP ports"; default = []; };
-      openUDPPorts = mkOption { type = types.listOf types.port; description = "Open UDP ports"; default = []; };
+      openTCPPorts = mkOption { type = types.listOf types.port; default = []; };
+      openUDPPorts = mkOption { type = types.listOf types.port; default = []; };
       openUDPPortRanges = mkOption {
         type = types.listOf (types.submodule {
           options = {
@@ -62,13 +60,10 @@ in {
           };
         });
         default = [];
-        description = "Open UDP port ranges";
       };
-      # Add the new option here
       trustedInterfaces = mkOption {
         type = types.listOf types.str;
         default = [];
-        description = "List of trusted network interface names for the firewall.";
       };
     };
   };
