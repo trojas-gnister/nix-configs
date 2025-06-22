@@ -40,7 +40,6 @@ in {
       gateway = mkOption { type = types.str; default = ""; };
       netmask = mkOption { type = types.str; default = ""; };
       hostname = mkOption { type = types.str; };
-      leviathan = { hostname = mkOption { type = types.str; }; };
     };
     ssh = {
       initrd = {

@@ -35,11 +35,6 @@
       netmask = "your.netmask.here";
       # Example: "nixos-desktop"
       hostname = "your-hostname";
-
-      # Specific hostname for the 'leviathan' flake configuration.
-      leviathan = {
-        hostname = "leviathan";
-      };
     };
 
     # Configuration for unlocking the system via SSH during early boot (initrd).
@@ -81,22 +76,32 @@
   # --------------------------------------------------------------------
   virtualisation.nixvirt.vms = {
 
-    "main-server" = {
-      # Set to true to create this VM.
-      enable = true;
-      # Generate a unique ID with the `uuidgen` command.
-      uuid = "a1b2c3d4-e5f6-7890-1234-567890abcdef";
-      # RAM size in GiB.
-      memorySize = 16;
-      # Path to the virtual disk for this VM.
-      diskPath = "/var/lib/libvirt/images/main-server.qcow2";
-    };
-
-    "testing-vm" = {
+    # --- EXAMPLE 1: Standard Storage Location ---
+    # This VM uses the default libvirt storage path. No special permissions are needed.
+    "standard-vm" = {
       enable = true;
       uuid = "f1e2d3c4-b5a6-9870-1234-abcdef123456";
       memorySize = 8;
-      diskPath = "/var/lib/libvirt/images/testing-vm.qcow2";
+      diskPath = "/var/lib/libvirt/images/standard-vm.qcow2";
+    };
+
+    # --- EXAMPLE 2: Custom Storage Location (e.g., another drive) ---
+    # IMPORTANT: When using a custom diskPath like this, you MUST add a security
+    # rule to your host's configuration (e.g., hosts/pc.nix or hosts/steamdeck.nix)
+    # to grant libvirt permission to access it. Example rule:
+    #
+    #   security.apparmor.policies."libvirtd".rules = [
+    #     "/path/to/your/vms/** rwk,"
+    #   ];
+    #
+    "custom-storage-vm" = {
+      enable = true;
+      # Generate with the `uuidgen` command
+      uuid = "a1b2c3d4-e5f6-7890-1234-567890abcdef";
+      # RAM size in GiB
+      memorySize = 16;
+      # Path to the virtual disk on a separate drive
+      diskPath = "/path/to/your/vms/custom-storage-vm.qcow2";
     };
 
     # You can disable a VM without deleting its configuration.
@@ -106,7 +111,5 @@
       memorySize = 4;
       diskPath = "/var/lib/libvirt/images/archived-vm.qcow2";
     };
-
-    # Add more VMs here by creating new entries...
   };
 }

@@ -21,7 +21,7 @@
     "cqhci"
     "mmc_block"
   ];
-  networking.hostName = config.variables.networking.leviathan.hostname;
+  networking.hostName = config.variables.networking.hostname;
   nix.settings.experimental-features = ["nix-command" "flakes"];
   system.stateVersion = "24.05";
   security.apparmor.policies."libvirtd".rules = [
