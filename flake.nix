@@ -96,7 +96,7 @@
 
       leviathan = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit self NixVirt; };
+        specialArgs = { inherit self NixVirt customIsoImage; };
         modules = [
           ./hardware-configuration.nix
           ./variables.nix
@@ -120,7 +120,7 @@
           ./modules/common/neovim.nix
           ./modules/common/mako.nix
           ./modules/common/virtualisation.nix
-          ./modules/vms/alpine-vm.nix
+          ./modules/vms/vm-generator.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name}.xdg.configFile = lib.mkMerge [
               (import ./modules/common/podman-quadlet-volumes/obsidian-config.nix { inherit pkgs config lib; })

@@ -13,6 +13,10 @@ in {
         type = types.listOf types.str;
         default = [];
       };
+      unfree = mkOption {
+        type = types.listOf types.str;
+        default = [];
+      };
     };
     steamdeck = {
       handheld = {
@@ -51,6 +55,15 @@ in {
     };
     firewall = {
       openTCPPorts = mkOption { type = types.listOf types.port; default = []; };
+      openTCPPortRanges = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            from = mkOption { type = types.port; };
+            to = mkOption { type = types.port; };
+          };
+        });
+        default = [];
+      };
       openUDPPorts = mkOption { type = types.listOf types.port; default = []; };
       openUDPPortRanges = mkOption {
         type = types.listOf (types.submodule {

@@ -24,7 +24,9 @@
   networking.hostName = config.variables.networking.leviathan.hostname;
   nix.settings.experimental-features = ["nix-command" "flakes"];
   system.stateVersion = "24.05";
-
+  security.apparmor.policies."libvirtd".rules = [
+    "/mnt/sd-card/vms/** rwk,"
+  ];
   programs.thunar.enable = true;
   services.tumbler.enable = true;
 
