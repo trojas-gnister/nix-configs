@@ -1,5 +1,5 @@
 {
-  description = "NixOS configurations for PC and Steam Deck";
+  description = "NixOS configurations for PC, Steam Deck, and Pi";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/a79cfe0ebd24952b580b1cf08cd906354996d547";
@@ -130,6 +130,41 @@
               (import ./modules/common/podman-quadlet-definitions/obsidian.nix { inherit pkgs config lib; })
               (import ./modules/common/podman-quadlet-definitions/steamos.nix { inherit pkgs config lib; })
             ];
+          })
+        ];
+      };
+
+      pi = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = { inherit NixVirt; };
+        modules = [
+          ./hardware-configuration.nix
+          ./variables.nix
+          ./hosts/pi.nix
+          home-manager.nixosModules.home-manager
+          ./modules/common/user.nix
+          ./modules/common/networking.nix
+          ./modules/common/firewall.nix
+          ./modules/common/ssh.nix
+          ./modules/common/podman.nix
+          ./modules/common/system-packages.nix
+          ./modules/common/home-manager.nix
+          # ./modules/common/virtualisation.nix # <--- REMOVED THIS LINE
+          ({ config, lib, pkgs, ... }: {
+            home-manager.users.${config.variables.user.name} = {
+              dconf.settings = {};
+              xdg.configFile = lib.mkMerge [
+                (import ./modules/common/podman-quadlet-definitions/gluetun.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/nextcloud.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/jellyfin.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/radarr.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/sonarr.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/qbittorrent.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/prowlarr.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/bazarr.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/jellyseerr.nix { inherit pkgs config lib; })
+              ];
+            };
           })
         ];
       };

@@ -23,18 +23,28 @@
         "btop"
         "neovim"
       ];
+      # A list of unfree packages to allow. Requires unfree.nix module.
+      unfree = [
+        "steam"
+      ];
     };
+
+    # (Optional) Settings specific to a Steam Deck device.
+    # steamdeck = {
+    #   handheld.enable = true;
+    #   ...
+    # };
 
     # Networking configuration for the host system.
     networking = {
+      # Example: "nixos-desktop"
+      hostname = "your-hostname";
       # Example: "192.168.1.100"
       staticIP = "your.static.ip.here";
       # Example: "192.168.1.1"
       gateway = "your.gateway.ip.here";
       # Example: "255.255.255.0"
       netmask = "your.netmask.here";
-      # Example: "nixos-desktop"
-      hostname = "your-hostname";
     };
 
     # Configuration for unlocking the system via SSH during early boot (initrd).
@@ -60,6 +70,9 @@
     # Host firewall settings.
     firewall = {
       openTCPPorts = [ 80 443 ];
+      openTCPPortRanges = [
+        { from = 8000; to = 8010; }
+      ];
       openUDPPorts = [ 51820 ];
       openUDPPortRanges = [
         { from = 60000; to = 61000; }
@@ -102,14 +115,6 @@
       memorySize = 16;
       # Path to the virtual disk on a separate drive
       diskPath = "/path/to/your/vms/custom-storage-vm.qcow2";
-    };
-
-    # You can disable a VM without deleting its configuration.
-    "archived-vm" = {
-      enable = false;
-      uuid = "c1d2e3f4-a5b6-c7d8-e9f0-123456abcdef";
-      memorySize = 4;
-      diskPath = "/var/lib/libvirt/images/archived-vm.qcow2";
     };
   };
 }
