@@ -2,7 +2,7 @@
 
 let
   modKey = "Mod4";
-
+  transform = config.variables.steamdeck.handheld.transform;
   rotate-script-sway = pkgs.writeShellScriptBin "rotate-sway" ''
     #!${pkgs.bash}/bin/bash
     PRIMARY_OUTPUT=$(${pkgs.sway}/bin/swaymsg -t get_outputs -r | \
@@ -138,8 +138,7 @@ in
         };
         output = {
           "eDP-1" = {
-            transform = "90";
-            resolution = "1080x1920";
+            transform = transform;
             scale = "1";
           };
         };
@@ -211,7 +210,6 @@ in
           "XF86MonBrightnessDown" = "exec brightnessctl set 5%-";
           "Print" = "exec grim -g \"$(${pkgs.slurp}/bin/slurp)\" - | ${pkgs.wl-clipboard}/bin/wl-copy";
           "Shift+Print" = "exec grim - | ${pkgs.wl-clipboard}/bin/wl-copy";
-          "${modifier}+r" = "exec rotate-sway";
         });
 
         window = {

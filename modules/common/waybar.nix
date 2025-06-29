@@ -14,17 +14,18 @@
 
           modules-left = [ "sway/workspaces" "sway/mode" ];
           modules-center = [ "sway/window" ];
+
           modules-right = [
-            "custom/rotate"
+
             "custom/term"
             "custom/launcher"
-            "custom/keyboard"
             "cpu"
             "memory"
             "battery"
             "clock"
             "tray"
-          ];
+          ] ++ ( if config.variables.steamdeck.handheld.enable then [            "custom/rotate" "custom/keyboard" ] else []);
+
 
           "sway/workspaces" = {
             disable-scroll = false;

@@ -1,8 +1,28 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, jovian, ... }:
 
 {
   imports = [
   ];
+
+  jovian.devices.steamdeck.enable = true;
+
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+    localNetworkGameTransfers.openFirewall = true;
+  };
+
+  home-manager.users.${config.variables.user.name} = {
+    xdg.desktopEntries."gs-launcher" = {
+      name = "Gamescope Steam";
+      comment = "Launch Steam in a Gamescope session";
+      exec = "gs-launcher";
+      icon = "steam";
+      terminal = false;
+      categories = [ "Game" ];
+    };
+  };
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -23,12 +43,8 @@
   ];
   networking.hostName = config.variables.networking.hostname;
   nix.settings.experimental-features = ["nix-command" "flakes"];
+  #TODO: move to variables
   system.stateVersion = "24.05";
-  security.apparmor.policies."libvirtd".rules = [
-    "/mnt/sd-card/vms/** rwk,"
-  ];
-  programs.thunar.enable = true;
-  services.tumbler.enable = true;
 
   services.displayManager.autoLogin = {
     enable = true;

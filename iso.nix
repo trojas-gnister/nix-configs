@@ -21,7 +21,6 @@
   environment.etc."profile.d/install.sh".text = ''
     # This script will run once upon login and perform a fully automated installation.
 
-    # Check for a "lock file" to ensure this script only runs once.
     if [ -f /tmp/install_started.lock ]; then
       echo "Installation script has already run. Not running again."
       return
@@ -31,7 +30,7 @@
     echo "--- STARTING AUTOMATED NIXOS INSTALLATION ---"
     set -e # Exit immediately if a command fails
 
-    # 1. Partition the disk
+    # 1. Partition the disk for a UEFI system
     echo "Partitioning /dev/vda..."
     sfdisk /dev/vda <<EOF
     label: gpt
@@ -51,43 +50,13 @@
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
 
-    # 4. Generate the NixOS configuration for the new system
-    echo "Generating target configuration.nix..."
-    cat > /mnt/etc/nixos/configuration.nix <<'EOF'
-    { config, pkgs, ... }:
+    # 4. Clone your NixOS configuration from GitHub
+    echo "Cloning nix-configs repository..."
+    git clone https://github.com/trojas-gnister/nix-configs /mnt/etc/nixos
 
-    {
-      imports = [
-        ./hardware-configuration.nix
-      ];
-
-      boot.loader.systemd-boot.enable = true;
-      boot.loader.efi.canTouchEfiVariables = true;
-
-      networking.hostName = "nixos-vm";
-      networking.useDHCP = true;
-
-      services.openssh.enable = true;
-      services.openssh.settings.PermitRootLogin = "prohibit-password";
-
-      users.users.demo = {
-        isNormalUser = true;
-        extraGroups = [ "wheel" ];
-        openssh.authorizedKeys.keys = [
-          # Add your SSH public key here if you have one
-        ];
-      };
-
-      system.stateVersion = "24.11";
-    }
-    EOF
-
-    # Generate the hardware config
-    nixos-generate-config --root /mnt
-
-    # 5. Install NixOS
-    echo "Installing NixOS..."
-    nixos-install --no-root-passwd
+    # 5. Install NixOS using the 'blackspace' configuration from your flake
+    echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
+    nixos-install --no-root-passwd --flake /mnt/etc/nixos#blackspace
 
     echo "--- INSTALLATION COMPLETE ---"
     echo "VM will now power off."
