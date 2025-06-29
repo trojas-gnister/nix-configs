@@ -162,7 +162,31 @@
           ./modules/common/mako.nix
         ];
       };
- 	
+      #TODO: can run qbittorrent in docker? 
+ 	      krawlspace = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit self; };
+        modules = [
+          ./hardware-configuration.nix
+          ./variables.nix
+          ./hosts/torrent.nix
+          home-manager.nixosModules.home-manager
+          ./modules/common/unfree.nix
+          ./modules/common/user.nix
+          ./modules/common/networking.nix
+          ./modules/common/audio.nix
+          ./modules/common/firewall.nix
+          ./modules/common/graphics.nix
+          ./modules/common/ssh.nix
+          ./modules/common/system-packages.nix
+          ./modules/common/home-manager.nix
+          ./modules/common/sway.nix
+          ./modules/common/waybar.nix
+          ./modules/common/bluetooth.nix
+          ./modules/common/neovim.nix
+          ./modules/common/mako.nix
+        ];
+      };
       blackspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit self customIsoImage; };
@@ -171,13 +195,12 @@
           ./variables.nix
           ./hosts/gamingserver.nix
           home-manager.nixosModules.home-manager
-          NixVirt.nixosModules.default
           ({ pkgs, ... }: {
             nixpkgs.overlays = [(final: prev: {
               gs-launcher = self.packages.${pkgs.system}.gs-launcher;
             })];
           })
-	  ./modules/common/steam.nix
+	        ./modules/common/steam.nix
           ./modules/common/user.nix
           ./modules/common/networking.nix
           ./modules/common/audio.nix
