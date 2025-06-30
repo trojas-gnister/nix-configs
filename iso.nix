@@ -54,20 +54,55 @@
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 4. Remove the generic configuration.nix that was just created
-    echo "Removing generic configuration.nix..."
-    rm /mnt/etc/nixos/configuration.nix
-
-    # 5. Clone your NixOS configuration into a temporary location
+    # 4. Clone your NixOS configuration into a temporary location
     echo "Cloning nix-configs repository..."
     git clone https://github.com/trojas-gnister/nix-configs /tmp/nix-configs
 
-    # 6. Copy your repository files into the final location
+    # 5. Copy your repository files into the final location
     echo "Copying repository files into place..."
     cp -rT /tmp/nix-configs/ /mnt/etc/nixos/
 
-    # 7. Clean up the temporary clone
-    rm -rf /tmp/nix-configs
+    # 6. Clean up unnecessary files from the repository
+    echo "Cleaning up configuration directory..."
+    rm /mnt/etc/nixos/configuration.nix
+    rm /mnt/etc/nixos/.gitignore
+
+    # 7. Create a basic variables.nix for the new VM
+    echo "Creating basic variables.nix..."
+    cat > /mnt/etc/nixos/variables.nix <<'EOF'
+    { config, lib, pkgs, ... }:
+    {
+      imports = [ ./lib/variables-module.nix ];
+
+      variables = {
+        packages = {
+          system = [];
+          homeManager = [
+            "kitty"
+            "tmux"
+            "btop"
+            "librewolf"
+            "pavucontrol"
+            "networkmanagerapplet"
+            "blueman"
+            "neovim"
+          ];
+        };
+
+        user = {
+          name = "user";
+          groups = [ "wheel" "audio" "video" ];
+        };
+
+        firewall = {
+          openTCPPorts = [];
+          openUDPPorts = [];
+          openUDPPortRanges = [];
+          trustedInterfaces = [];
+        };
+      };
+    }
+    EOF
 
     # 8. Install NixOS using the final, assembled configuration
     echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
