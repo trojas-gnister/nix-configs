@@ -36,6 +36,9 @@ in {
         };
       };
     };
+    vm = {
+      password = mkOptions { type = types.str; };
+      };
     networking = {
       staticIP = mkOption { type = types.str; default = ""; };
       gateway = mkOption { type = types.str; default = ""; };
@@ -52,7 +55,8 @@ in {
     };
     user = {
       name = mkOption { type = types.str; };
-      groups = mkOption { type = types.listOf types.str; default = []; };
+      password = mkOptions { type = types.str };
+      groups = mkOption { type = types.listOf types.str; };
     };
     firewall = {
       openTCPPorts = mkOption { type = types.listOf types.port; default = []; };

@@ -30,29 +30,30 @@
     echo "--- STARTING AUTOMATED NIXOS INSTALLATION ---"
     set -e # Exit immediately if a command fails
 
-    # 1. Partition the disk for a UEFI system
-    echo "Partitioning /dev/vda..."
+    # 1. Partition and format the disk for a UEFI system
+    echo "Partitioning and formatting /dev/vda..."
     sfdisk /dev/vda <<EOF
     label: gpt
     ,1G,U,*
     ,,L
     EOF
-
-    # 2. Format the filesystems
-    echo "Formatting filesystems..."
     mkfs.fat -F 32 -n boot /dev/vda1
-    mkfs.ext4 -L root /dev/vda2
+    mkfs.ext4 -F -L root /dev/vda2
 
-    # 3. Mount the filesystems
+    # 2. Mount the filesystems
     echo "Mounting filesystems..."
     mkdir -p /mnt
     mount /dev/disk/by-label/root /mnt
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
 
-    # 4. Clone your NixOS configuration from GitHub
+    # 3. Clone your NixOS configuration from GitHub
     echo "Cloning nix-configs repository..."
     git clone https://github.com/trojas-gnister/nix-configs /mnt/etc/nixos
+
+    # 4. Generate the hardware-specific configuration for the new VM
+    echo "Generating hardware configuration..."
+    nixos-generate-config --root /mnt
 
     # 5. Install NixOS using the 'blackspace' configuration from your flake
     echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
