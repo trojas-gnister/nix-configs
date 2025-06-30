@@ -50,50 +50,29 @@
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
 
-    # 3. Generate the hardware-specific configuration first
+    # 3. Clone your NixOS configuration from GitHub
+    echo "Cloning nix-configs repository..."
+    git clone https://github.com/trojas-gnister/nix-configs /mnt/etc/nixos
+
+    # 4. Generate the hardware-specific configuration
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 4. Clone your NixOS configuration into a temporary location
-    echo "Cloning nix-configs repository..."
-    git clone https://github.com/trojas-gnister/nix-configs /tmp/nix-configs
-
-    # 5. Copy your repository files into the final location
-    echo "Copying repository files into place..."
-    cp -rT /tmp/nix-configs/ /mnt/etc/nixos/
-
-    # 6. Clean up unnecessary files from the repository
-    echo "Cleaning up configuration directory..."
-    rm /mnt/etc/nixos/configuration.nix
-    rm /mnt/etc/nixos/.gitignore
-
-    # 7. Create a basic variables.nix for the new VM
+    # 5. Create the required variables.nix for the new host
     echo "Creating basic variables.nix..."
     cat > /mnt/etc/nixos/variables.nix <<'EOF'
     { config, lib, pkgs, ... }:
     {
       imports = [ ./lib/variables-module.nix ];
-
       variables = {
         packages = {
           system = [];
-          homeManager = [
-            "kitty"
-            "tmux"
-            "btop"
-            "librewolf"
-            "pavucontrol"
-            "networkmanagerapplet"
-            "blueman"
-            "neovim"
-          ];
+          homeManager = [ "kitty" "tmux" "btop" "librewolf" "pavucontrol" "networkmanagerapplet" "blueman" "neovim" ];
         };
-
         user = {
           name = "user";
           groups = [ "wheel" "audio" "video" ];
         };
-
         firewall = {
           openTCPPorts = [];
           openUDPPorts = [];
@@ -104,7 +83,13 @@
     }
     EOF
 
-    # 8. Install NixOS using the final, assembled configuration
+    # 6. Final cleanup of the configuration directory
+    echo "Cleaning up configuration directory..."
+    rm /mnt/etc/nixos/configuration.nix
+    rm /mnt/etc/nixos/.gitignore
+    rm -rf /mnt/etc/nixos/.git
+
+    # 7. Install NixOS using the final, assembled configuration
     echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
     nixos-install --no-root-passwd --impure --flake /mnt/etc/nixos#blackspace
 
