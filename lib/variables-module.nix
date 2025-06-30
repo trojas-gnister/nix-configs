@@ -43,8 +43,7 @@ in {
       staticIP = mkOption { type = types.str; default = ""; };
       gateway = mkOption { type = types.str; default = ""; };
       netmask = mkOption { type = types.str; default = ""; };
-      hostname = mkOption { type = types.str; };
-      leviathan = { hostname = mkOption { type = types.str; }; };
+      hostname = mkOption { type = types.str; default = "hostname" };
     };
     ssh = {
       initrd = {
@@ -54,9 +53,9 @@ in {
       };
     };
     user = {
-      name = mkOption { type = types.str; };
-      password = mkOptions { type = types.str };
-      groups = mkOption { type = types.listOf types.str; };
+      name = mkOption { type = types.str; default = "user" };
+      password = mkOptions { type = types.str; default = "password"; };
+      groups = mkOption { type = types.listOf types.str; default = [ "wheel" "audio" ];  };
     };
     firewall = {
       openTCPPorts = mkOption { type = types.listOf types.port; default = []; };

@@ -2,15 +2,11 @@
 
 {
   users.groups.container-devices = {};
-
+  
   users.users.${config.variables.user.name} = {
+    password = config.variables.user.password;
     isNormalUser = true;
     extraGroups = config.variables.user.groups ++ [ "container-devices" ];
-    packages = with pkgs; [
-      tmux
-      btop
-      brightnessctl
-    ];
   };
 
   services.udev.extraRules = ''
