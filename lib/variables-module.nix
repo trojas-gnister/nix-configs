@@ -53,8 +53,8 @@ in {
       };
     };
     user = {
-      name = mkOption { type = types.str; default = "user" };
-      password = mkOptions { type = types.str; default = "password"; };
+      name = mkOption { type = types.str; default = "user"; };
+      password = mkOption { type = types.str; default = "password"; };
       groups = mkOption { type = types.listOf types.str; default = [ "wheel" "audio" ];  };
     };
     firewall = {
