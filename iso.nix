@@ -58,40 +58,18 @@
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 5. Create the required variables.nix for the new host
-    echo "Creating basic variables.nix..."
-    cat > /mnt/etc/nixos/variables.nix <<'EOF'
-    { config, lib, pkgs, ... }:
-    {
-      imports = [ ./lib/variables-module.nix ];
-      variables = {
-        packages = {
-          system = [];
-          homeManager = [ "kitty" "tmux" "btop" "librewolf" "pavucontrol" "networkmanagerapplet" "blueman" "neovim" ];
-        };
-        user = {
-          name = "user";
-          groups = [ "wheel" "audio" "video" ];
-        };
-        firewall = {
-          openTCPPorts = [];
-          openUDPPorts = [];
-          openUDPPortRanges = [];
-          trustedInterfaces = [];
-        };
-      };
-    }
-    EOF
+    # 5. Prepare the final configuration directory
+    echo "Preparing final configuration..."
+    # Change into the repository directory
+    cd /mnt/etc/nixos
+    # Add the newly generated hardware configuration to the git index.
+    git add hardware-configuration.nix
 
-    # 6. Final cleanup of the configuration directory
-    echo "Cleaning up configuration directory..."
-    rm /mnt/etc/nixos/configuration.nix
-    rm /mnt/etc/nixos/.gitignore
-    rm -rf /mnt/etc/nixos/.git
-
-    # 7. Install NixOS using the final, assembled configuration
-    echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
-    nixos-install --no-root-passwd --impure --flake /mnt/etc/nixos#blackspace
+    # 6. Install NixOS using the 'blackspace' configuration from your flake
+    echo "Installing NixOS from flake: .#blackspace"
+    # Allow unfree packages (like steam) to be installed.
+    export NIXPKGS_ALLOW_UNFREE=1
+    nixos-install --no-root-passwd --impure --flake .#blackspace
 
     echo "--- INSTALLATION COMPLETE ---"
     echo "VM will now power off."
