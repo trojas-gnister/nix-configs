@@ -137,6 +137,7 @@
       };
 
       headspace = nixpkgs.lib.nixosSystem {
+        #TODO: not x86_64-linux
         system = "x86_64-linux";
         specialArgs = { inherit self; };
         modules = [

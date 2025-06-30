@@ -16,6 +16,7 @@
     rustc
     tmux
     gptfdisk
+    parted
   ];
 
   environment.etc."profile.d/install.sh".text = ''
@@ -23,7 +24,7 @@
 
     if [ -f /tmp/install_started.lock ]; then
       echo "Installation script has already run. Not running again."
-      return
+      exit 0
     fi
     touch /tmp/install_started.lock
 
@@ -37,6 +38,8 @@
     ,1G,U,*
     ,,L
     EOF
+    partprobe /dev/vda
+    sleep 2
     mkfs.fat -F 32 -n boot /dev/vda1
     mkfs.ext4 -F -L root /dev/vda2
 
@@ -47,17 +50,28 @@
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
 
-    # 3. Clone your NixOS configuration from GitHub
-    echo "Cloning nix-configs repository..."
-    git clone https://github.com/trojas-gnister/nix-configs /mnt/etc/nixos
-
-    # 4. Generate the hardware-specific configuration for the new VM
+    # 3. Generate the hardware-specific configuration first
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 5. Install NixOS using the 'blackspace' configuration from your flake
+    # 4. Remove the generic configuration.nix that was just created
+    echo "Removing generic configuration.nix..."
+    rm /mnt/etc/nixos/configuration.nix
+
+    # 5. Clone your NixOS configuration into a temporary location
+    echo "Cloning nix-configs repository..."
+    git clone https://github.com/trojas-gnister/nix-configs /tmp/nix-configs
+
+    # 6. Copy your repository files into the final location
+    echo "Copying repository files into place..."
+    cp -rT /tmp/nix-configs/ /mnt/etc/nixos/
+
+    # 7. Clean up the temporary clone
+    rm -rf /tmp/nix-configs
+
+    # 8. Install NixOS using the final, assembled configuration
     echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
-    nixos-install --no-root-passwd --flake /mnt/etc/nixos#blackspace
+    nixos-install --no-root-passwd --impure --flake /mnt/etc/nixos#blackspace
 
     echo "--- INSTALLATION COMPLETE ---"
     echo "VM will now power off."
