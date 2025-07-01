@@ -28,6 +28,11 @@ in
           default = "/var/lib/libvirt/images/nixos-vm-installer.iso";
           description = "Path to the installer ISO for the VM.";
         };
+        firstBoot = mkOption {
+          type = types.bool;
+          default = false;
+          description = "If true, attach the installer ISO for initial installation.";
+        };
       };
     }));
     default = {};
@@ -38,16 +43,19 @@ in
     virtualisation.libvirt.connections."qemu:///system".domains =
       mapAttrsToList (name: vm:
         let
-          baseTemplate = NixVirt.lib.domain.templates.pc {
+          templateConfig = {
             inherit name;
             uuid = vm.uuid;
             uefi = true;
             memory = { count = vm.memorySize; unit = "GiB"; };
             storage_vol = vm.diskPath;
-            install_vol = vm.isoPath;
             bridge_name = "default";
             virtio_net = true;
-          };
+          } // (lib.optionalAttrs vm.firstBoot {
+            install_vol = vm.isoPath;
+          });
+
+          baseTemplate = NixVirt.lib.domain.templates.pc templateConfig;
           headlessDevices = builtins.removeAttrs baseTemplate.devices [ "graphics" "video" "sound" "audio" "input" "channel" "redirdev" "hub" ];
           finalDevices = headlessDevices // { serial = [ { type = "pty"; } ]; console = [ { type = "pty"; } ]; };
           finalConfig = baseTemplate // { devices = finalDevices; };
