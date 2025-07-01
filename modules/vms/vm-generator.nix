@@ -49,7 +49,7 @@ in
             uefi = true;
             memory = { count = vm.memorySize; unit = "GiB"; };
             storage_vol = vm.diskPath;
-            bridge_name = "default";
+            bridge_name = "virbr0";
             virtio_net = true;
           } // (lib.optionalAttrs vm.firstBoot {
             install_vol = vm.isoPath;
