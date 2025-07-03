@@ -33,7 +33,6 @@
 
     # 1. Partition and format the disk for a UEFI system
     echo "Partitioning and formatting /dev/vda..."
-    # Use printf to pipe commands to sfdisk, which is more reliable in scripts
     printf 'label: gpt\n,1G,U,*\n,,L\n' | sfdisk /dev/vda
 
     partprobe /dev/vda
@@ -47,12 +46,18 @@
     mount /dev/disk/by-label/root /mnt
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
+    
+    # 3. Prepare NixOS configuration directory
+    echo "Creating /mnt/etc/nixos directory..."
+    mkdir -p /mnt/etc/nixos
+    
+    # 4. Clone config to home directory and copy necessary files
+    echo "Cloning nix-configs to home and copying to /mnt/etc/nixos..."
+    cd /root
+    git clone https://github.com/trojas-gnister/nix-configs
+    cp -r nix-configs/flake.nix nix-configs/hosts nix-configs/iso nix-configs/lib nix-configs/modules /mnt/etc/nixos/
 
-    # 3. Clone your NixOS configuration from GitHub
-    echo "Cloning nix-configs repository..."
-    git clone https://github.com/trojas-gnister/nix-configs /mnt/etc/nixos
-
-    # 4. Create the VM-specific variables.nix
+    # 5. Create the VM-specific variables.nix
     echo "Creating variables.nix for the new VM..."
     cat > /mnt/etc/nixos/variables.nix <<'EOF'
 { config, lib, pkgs, ... }:
@@ -93,16 +98,16 @@
 }
 EOF
 
-    # 5. Generate the hardware-specific configuration
+    # 6. Generate the hardware-specific configuration
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 6. Prepare the final configuration directory
+    # 7. Prepare the final configuration directory
     echo "Preparing final configuration..."
     cd /mnt/etc/nixos
     git add hardware-configuration.nix
 
-    # 7. Install NixOS using the 'krawlspace' configuration from your flake
+    # 8. Install NixOS using the 'krawlspace' configuration from your flake
     echo "Installing NixOS from flake: .#krawlspace"
     export NIXPKGS_ALLOW_UNFREE=1
     nixos-install --no-root-passwd --impure --flake .#krawlspace
