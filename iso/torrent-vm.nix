@@ -62,7 +62,7 @@
     echo "Cloning nix-configs repository..."
     cd 
     git clone https://github.com/trojas-gnister/nix-configs 
-    cp -r ~/nix-configs/flake.nix ~/nix-configs/hosts ~/nix-configs/iso.nix ~/nix-configs/lib ~/nix-configs/modules /etc/nixos
+    cp -r ~/nix-configs/flake.nix ~/nix-configs/hosts ~/nix-configs/iso ~/nix-configs/lib ~/nix-configs/modules /etc/nixos
 
     # 5. Prepare the final configuration directory
     echo "Preparing final configuration..."
