@@ -3,42 +3,9 @@
 with lib;
 
 let
-  cfg = config.virtualisation.nixvirt.vms;
+  cfg = config.variables.vms;
 in
 {
-  options.virtualisation.nixvirt.vms = mkOption {
-    type = types.attrsOf (types.submodule ({ name, ... }: {
-      options = {
-        enable = mkEnableOption "NixOS VM named ${name}";
-        diskPath = mkOption {
-          type = types.str;
-          description = "Path to the qcow2 disk image for the VM.";
-        };
-        memorySize = mkOption {
-          type = types.int;
-          default = 4;
-          description = "RAM size in GiB.";
-        };
-        uuid = mkOption {
-          type = types.str;
-          description = "Unique UUID for the VM.";
-        };
-        isoName = mkOption {
-          type = types.nullOr types.str;
-          default = null;
-          description = "The name of the ISO build (e.g., 'torrent-vm') to use for installation. Must match a key in customIsoImages.";
-        };
-        firstBoot = mkOption {
-          type = types.bool;
-          default = false;
-          description = "If true, attach the installer ISO for initial installation.";
-        };
-      };
-    }));
-    default = {};
-    description = "Declarative definition of NixOS virtual machines.";
-  };
-
   config = mkIf (cfg != {}) {
     virtualisation.libvirt.connections."qemu:///system".domains =
       mapAttrsToList (name: vm:
@@ -82,19 +49,22 @@ in
     system.activationScripts.copyVmIsos = let
       copyCommands = lib.mapAttrsToList (vmName: vm:
         let
-          isoDerivation = customIsoImages.${vm.isoName} or (throw "ISO configuration '${vm.isoName}' for VM '${vmName}' is not defined. Check your flake's specialArgs.");
-          srcPathGlob = "${isoDerivation}/iso/*.iso";
+          isoBuildDir = customIsoImages.${vm.isoName} or (throw "ISO configuration '${vm.isoName}' for VM '${vmName}' is not defined. Check your flake's specialArgs.");
           destPath = "/var/lib/libvirt/images/${vm.isoName}.iso";
         in ''
           echo "Processing ISO for VM: ${vmName}"
-          iso_files=(${srcPathGlob})
+          shopt -s nullglob
+          iso_files=("${isoBuildDir}/iso/"*.iso)
           if [ ''${#iso_files[@]} -ne 1 ]; then
-            echo "ERROR: Expected 1 ISO file in ${isoDerivation}/iso for '${vm.isoName}', but found ''${#iso_files[@]}." >&2
+            echo "ERROR: Expected to find exactly one .iso file in ${isoBuildDir}/iso, but found ''${#iso_files[@]}." >&2
             exit 1
           fi
-          if [ ! -f "${destPath}" ] || ! cmp -s "''${iso_files[0]}" "${destPath}"; then
-            echo "Copying ''${iso_files[0]} to ${destPath}"
-            cp "''${iso_files[0]}" "${destPath}"
+          
+          src_iso_path="''${iso_files[0]}"
+
+          if [ ! -f "${destPath}" ] || ! cmp -s "$src_iso_path" "${destPath}"; then
+            echo "Copying $src_iso_path to ${destPath}"
+            cp "$src_iso_path" "${destPath}"
             chmod 644 "${destPath}"
           else
             echo "ISO for ${vmName} is already up-to-date."
@@ -102,7 +72,6 @@ in
         ''
       ) (lib.filterAttrs (n: v: v.enable && v.firstBoot && v.isoName != null) cfg);
     in {
-      deps = [ "libvirtd" ];
       text = ''
         echo "Setting up VM ISOs in /var/lib/libvirt/images/..."
         mkdir -p /var/lib/libvirt/images
@@ -112,4 +81,3 @@ in
     };
   };
 }
-
