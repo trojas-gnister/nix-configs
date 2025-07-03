@@ -102,19 +102,13 @@ EOF
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 7. Prepare the final configuration directory
-    echo "Preparing final configuration..."
-    cd /mnt/etc/nixos
-    git add hardware-configuration.nix
-
-    # 8. Install NixOS using the 'krawlspace' configuration from your flake
-    echo "Installing NixOS from flake: .#krawlspace"
+    # 7. Install NixOS using the 'krawlspace' configuration from your flake
+    echo "Installing NixOS from flake: /mnt/etc/nixos#krawlspace"
     export NIXPKGS_ALLOW_UNFREE=1
-    nixos-install --no-root-passwd --impure --flake .#krawlspace
+    nixos-install --no-root-passwd --impure --flake /mnt/etc/nixos#krawlspace
 
     echo "--- INSTALLATION COMPLETE ---"
     echo "VM will now power off."
     poweroff
   '';
 }
-
