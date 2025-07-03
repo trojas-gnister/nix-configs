@@ -31,8 +31,8 @@
     echo "--- STARTING AUTOMATED NIXOS INSTALLATION ---"
     set -e # Exit immediately if a command fails
 
-    # 1. Partition the disk
-    echo "Partitioning /dev/vda..."
+    # 1. Partition and format the disk for a UEFI system
+    echo "Partitioning and formatting /dev/vda..."
     sfdisk /dev/vda <<EOF
     label: gpt
     ,1G,U,*
@@ -40,39 +40,72 @@
     EOF
     partprobe /dev/vda
     sleep 2
-
-    # 2. Format the filesystems
-    echo "Formatting filesystems..."
     mkfs.fat -F 32 -n boot /dev/vda1
     mkfs.ext4 -F -L root /dev/vda2
 
-    # Wait for udev to create the /dev/disk/by-label links
-    echo "Waiting for udev to settle..."
-    udevadm settle
-    sleep 2
-
-    # 3. Mount the filesystems
+    # 2. Mount the filesystems
     echo "Mounting filesystems..."
     mkdir -p /mnt
     mount /dev/disk/by-label/root /mnt
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
 
-    # 4. Clone your NixOS configuration from GitHub
+    # 3. Clone your NixOS configuration from GitHub
     echo "Cloning nix-configs repository..."
-    cd 
-    git clone https://github.com/trojas-gnister/nix-configs 
-    cp -r ~/nix-configs/flake.nix ~/nix-configs/hosts ~/nix-configs/iso ~/nix-configs/lib ~/nix-configs/modules /etc/nixos
+    git clone https://github.com/trojas-gnister/nix-configs /mnt/etc/nixos
 
-    # 5. Prepare the final configuration directory
-    echo "Preparing final configuration..."
-    # Generate the hardware-specific configuration
+    # 4. Create the VM-specific variables.nix
+    echo "Creating variables.nix for the new VM..."
+    cat > /mnt/etc/nixos/variables.nix <<'EOF'
+{ config, lib, pkgs, ... }:
+{
+  imports = [ ./lib/variables-module.nix ];
+
+  variables = {
+    packages = {
+      system = [
+      ];
+      homeManager = [
+        "kitty"
+        "tmux"
+        "btop"
+        "librewolf"
+        "pavucontrol"
+        "networkmanagerapplet"
+        "blueman"
+        "neovim"
+      ];
+    };
+
+    user = {
+      name = "user";
+      groups = [  "wheel" "audio" "video" ];
+    };
+
+    firewall = {
+      openTCPPorts = [
+      ];
+      openUDPPorts = [
+      ];
+      openUDPPortRanges = [
+      ];
+      trustedInterfaces = [ ];
+    };
+  };
+}
+EOF
+
+    # 5. Generate the hardware-specific configuration
+    echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
-    # Change into the repository directory
+
+    # 6. Prepare the final configuration directory
+    echo "Preparing final configuration..."
     cd /mnt/etc/nixos
-    # 6. Install NixOS using the 'blackspace' configuration from your flake
+    git add hardware-configuration.nix
+
+    # 7. Install NixOS using the 'blackspace' configuration from your flake
     echo "Installing NixOS from flake: .#blackspace"
-    # Allow unfree packages (like steam) to be installed.
     export NIXPKGS_ALLOW_UNFREE=1
     nixos-install --no-root-passwd --impure --flake .#blackspace
 
@@ -81,3 +114,4 @@
     poweroff
   '';
 }
+
