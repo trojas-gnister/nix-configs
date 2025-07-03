@@ -60,7 +60,9 @@
 
     # 4. Clone your NixOS configuration from GitHub
     echo "Cloning nix-configs repository..."
-    git clone https://github.com/trojas-gnister/nix-configs /mnt/etc/nixos
+    cd 
+    git clone https://github.com/trojas-gnister/nix-configs 
+    cp -r ~/nix-configs/flake.nix ~/nix-configs/hosts ~/nix-configs/iso.nix ~/nix-configs/lib ~/nix-configs/modules /etc/nixos
 
     # 5. Prepare the final configuration directory
     echo "Preparing final configuration..."
@@ -68,14 +70,11 @@
     nixos-generate-config --root /mnt
     # Change into the repository directory
     cd /mnt/etc/nixos
-    # Add the newly generated hardware configuration to the git index.
-    git add hardware-configuration.nix
-
     # 6. Install NixOS using the 'blackspace' configuration from your flake
-    echo "Installing NixOS from flake: .#blackspace"
+    echo "Installing NixOS from flake: .#krawlspace"
     # Allow unfree packages (like steam) to be installed.
     export NIXPKGS_ALLOW_UNFREE=1
-    nixos-install --no-root-passwd --impure --flake .#blackspace
+    nixos-install --no-root-passwd --impure --flake .#krawlspace
 
     echo "--- INSTALLATION COMPLETE ---"
     echo "VM will now power off."

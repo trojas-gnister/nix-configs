@@ -36,9 +36,38 @@ in {
         };
       };
     };
-    vm = {
-      password = mkOptions { type = types.str; };
-      };
+    vms = mkOption {
+      type = types.attrsOf (types.submodule ({ name, ... }: {
+        options = {
+          enable = mkEnableOption "NixOS VM named ${name}";
+          diskPath = mkOption {
+            type = types.str;
+            description = "Path to the qcow2 disk image for the VM.";
+          };
+          memorySize = mkOption {
+            type = types.int;
+            default = 4;
+            description = "RAM size in GiB.";
+          };
+          uuid = mkOption {
+            type = types.str;
+            description = "Unique UUID for the VM.";
+          };
+          isoName = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "The name of the ISO build to use for installation.";
+          };
+          firstBoot = mkOption {
+            type = types.bool;
+            default = false;
+            description = "If true, attach the installer ISO for initial installation.";
+          };
+        };
+      }));
+      default = {};
+      description = "Declarative definition of virtual machines.";
+    };
     networking = {
       staticIP = mkOption { type = types.str; default = ""; };
       gateway = mkOption { type = types.str; default = ""; };
@@ -55,7 +84,7 @@ in {
     user = {
       name = mkOption { type = types.str; default = "user"; };
       password = mkOption { type = types.str; default = "password"; };
-      groups = mkOption { type = types.listOf types.str; default = [ "wheel" "audio" ];  };
+      groups = mkOption { type = types.listOf types.str; default = [ "wheel" "audio" ]; };
     };
     firewall = {
       openTCPPorts = mkOption { type = types.listOf types.port; default = []; };
@@ -85,4 +114,3 @@ in {
     };
   };
 }
-

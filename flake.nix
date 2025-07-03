@@ -20,15 +20,21 @@
   let
     allSystems = [ "x86_64-linux" ];
     forAllSystems = nixpkgs.lib.genAttrs allSystems;
+    lib = nixpkgs.lib;
 
-    customIso = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        (import ./iso.nix { pkgs = nixpkgs.legacyPackages.x86_64-linux; inherit nixpkgs; })
-      ];
-    };
-
-    customIsoImage = customIso.config.system.build.isoImage;
+    customIsoImages =
+      let
+        isoDir = ./iso;
+        isoFiles = builtins.attrNames (builtins.readDir isoDir);
+        isoNixFiles = builtins.filter (f: lib.hasSuffix ".nix" f) isoFiles;
+      in lib.genAttrs (map (f: lib.removeSuffix ".nix" f) isoNixFiles) (name:
+        (nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            (import "${isoDir}/${name}.nix" { pkgs = nixpkgs.legacyPackages.x86_64-linux; inherit nixpkgs; })
+          ];
+        }).config.system.build.isoImage
+      );
 
   in
   {
@@ -47,7 +53,7 @@
     nixosConfigurations = {
       whitespace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit self NixVirt customIsoImage; };
+        specialArgs = { inherit self NixVirt customIsoImages; };
         modules = [
           ./hardware-configuration.nix
           ./variables.nix
@@ -101,15 +107,14 @@
 
       leviathan = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit self NixVirt customIsoImage jovian; };
+        specialArgs = { inherit self NixVirt customIsoImages jovian; };
         modules = [
           ./hardware-configuration.nix
           ./variables.nix
           ./hosts/steamdeck.nix
           home-manager.nixosModules.home-manager
           NixVirt.nixosModules.default
-	  jovian.nixosModules.default
-
+          jovian.nixosModules.default
           ./modules/common/unfree.nix
           ./modules/common/user.nix
           ./modules/common/networking.nix
@@ -137,14 +142,13 @@
       };
 
       headspace = nixpkgs.lib.nixosSystem {
-        #TODO: not x86_64-linux
         system = "x86_64-linux";
         specialArgs = { inherit self; };
         modules = [
           ./hardware-configuration.nix
           ./variables.nix
           ./hosts/m1.nix
-	  ./apple-silicon-support
+          ./apple-silicon-support
           home-manager.nixosModules.home-manager
           NixVirt.nixosModules.default
           ./modules/common/unfree.nix
@@ -163,8 +167,7 @@
           ./modules/common/mako.nix
         ];
       };
-      #TODO: can run qbittorrent in docker? 
- 	      krawlspace = nixpkgs.lib.nixosSystem {
+      krawlspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit self; };
         modules = [
@@ -172,7 +175,6 @@
           ./variables.nix
           ./hosts/torrent.nix
           home-manager.nixosModules.home-manager
-          ./modules/common/unfree.nix
           ./modules/common/user.nix
           ./modules/common/networking.nix
           ./modules/common/audio.nix
@@ -186,11 +188,18 @@
           ./modules/common/bluetooth.nix
           ./modules/common/neovim.nix
           ./modules/common/mako.nix
+          ({ config, lib, pkgs, ... }: {
+            home-manager.users.${config.variables.user.name} = {
+              xdg.configFile = lib.mkMerge [
+                (import ./modules/common/podman-quadlet-definitions/qbittorrentvpn.nix { inherit pkgs config lib; })
+              ];
+            };
+          })
         ];
       };
       blackspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit self customIsoImage; };
+        specialArgs = { inherit self; };
         modules = [
           ./hardware-configuration.nix
           ./variables.nix
@@ -201,7 +210,7 @@
               gs-launcher = self.packages.${pkgs.system}.gs-launcher;
             })];
           })
-	        ./modules/common/steam.nix
+          ./modules/common/steam.nix
           ./modules/common/user.nix
           ./modules/common/networking.nix
           ./modules/common/audio.nix
