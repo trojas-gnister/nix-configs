@@ -33,11 +33,9 @@
 
     # 1. Partition and format the disk for a UEFI system
     echo "Partitioning and formatting /dev/vda..."
-    sfdisk /dev/vda <<EOF
-    label: gpt
-    ,1G,U,*
-    ,,L
-    EOF
+    # Use printf to pipe commands to sfdisk, which is more reliable in scripts
+    printf 'label: gpt\n,1G,U,*\n,,L\n' | sfdisk /dev/vda
+
     partprobe /dev/vda
     sleep 2
     mkfs.fat -F 32 -n boot /dev/vda1
