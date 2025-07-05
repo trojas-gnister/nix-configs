@@ -67,7 +67,8 @@
     rm -rf /tmp/nix-configs
     rm -f /mnt/etc/nixos/configuration.nix
     rm -f /mnt/etc/nixos/.gitignore
-
+    rm -rf /mnt/etc/nixos/.git
+    
     # 7. Create a minimal variables.nix for the new VM
     echo "Creating minimal variables.nix for the new VM..."
     cat > /mnt/etc/nixos/variables.nix <<'EOF'
