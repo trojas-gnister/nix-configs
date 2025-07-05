@@ -11,8 +11,8 @@ in
       mapAttrsToList (name: vm:
         let
           finalIsoPath = if vm.firstBoot && vm.isoName != null
-                         then "/var/lib/libvirt/images/${vm.isoName}.iso"
-                         else null;
+                           then "/var/lib/libvirt/images/${vm.isoName}.iso"
+                           else null;
 
           templateConfig = {
             inherit name;
@@ -46,38 +46,45 @@ in
         ''
       ) (filterAttrs (n: v: v.enable) cfg);
 
-    system.activationScripts.copyVmIsos = let
-      copyCommands = lib.mapAttrsToList (vmName: vm:
-        let
-          isoBuildDir = customIsoImages.${vm.isoName} or (throw "ISO configuration '${vm.isoName}' for VM '${vmName}' is not defined. Check your flake's specialArgs.");
-          destPath = "/var/lib/libvirt/images/${vm.isoName}.iso";
-        in ''
-          echo "Processing ISO for VM: ${vmName}"
-          shopt -s nullglob
-          iso_files=("${isoBuildDir}/iso/"*.iso)
-          if [ ''${#iso_files[@]} -ne 1 ]; then
-            echo "ERROR: Expected to find exactly one .iso file in ${isoBuildDir}/iso, but found ''${#iso_files[@]}." >&2
-            exit 1
+    system.activationScripts.setupVms =
+      let
+        vmSetupCommands = lib.mapAttrsToList (name: vm: ''
+          if [ ! -f "${vm.diskPath}" ]; then
+            echo "Creating new qcow2 disk for ${name} at ${vm.diskPath}"
+            ${pkgs.qemu}/bin/qemu-img create -f qcow2 "${vm.diskPath}" ${toString vm.diskSize}G
           fi
-          
-          src_iso_path="''${iso_files[0]}"
 
-          if [ ! -f "${destPath}" ] || ! cmp -s "$src_iso_path" "${destPath}"; then
-            echo "Copying $src_iso_path to ${destPath}"
-            cp "$src_iso_path" "${destPath}"
-            chmod 644 "${destPath}"
-          else
-            echo "ISO for ${vmName} is already up-to-date."
-          fi
-        ''
-      ) (lib.filterAttrs (n: v: v.enable && v.firstBoot && v.isoName != null) cfg);
-    in {
-      text = ''
-        echo "Setting up VM ISOs in /var/lib/libvirt/images/..."
-        mkdir -p /var/lib/libvirt/images
-        ${lib.concatStringsSep "\n" copyCommands}
-        echo "Finished setting up VM ISOs."
-      '';
-    };
+          ${lib.optionalString (vm.enable && vm.firstBoot && vm.isoName != null) ''
+            echo "Processing ISO for VM: ${name}"
+            isoBuildDir=$(${pkgs.nix}/bin/nix path-info -S ${customIsoImages.${vm.isoName}})
+            destPath="/var/lib/libvirt/images/${vm.isoName}.iso"
+
+            shopt -s nullglob
+            iso_files=("$isoBuildDir/iso/"*.iso)
+            if [ ''${#iso_files[@]} -ne 1 ]; then
+              echo "ERROR: Expected to find exactly one .iso file in $isoBuildDir/iso, but found ''${#iso_files[@]}." >&2
+              exit 1
+            fi
+            
+            src_iso_path="''${iso_files[0]}"
+
+            if [ ! -f "$destPath" ] || ! ${pkgs.diffutils}/bin/cmp -s "$src_iso_path" "$destPath"; then
+              echo "Copying $src_iso_path to $destPath"
+              cp "$src_iso_path" "$destPath"
+              chmod 644 "$destPath"
+            else
+              echo "ISO for ${name} is already up-to-date."
+            fi
+          ''}
+        '') (lib.filterAttrs (n: v: v.enable) cfg);
+      in
+      {
+        text = ''
+          echo "Setting up VM disks and ISOs in /var/lib/libvirt/images/..."
+          mkdir -p /var/lib/libvirt/images
+          ${lib.concatStringsSep "\n" vmSetupCommands}
+          echo "Finished setting up VM disks and ISOs."
+        '';
+      };
   };
 }
