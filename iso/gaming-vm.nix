@@ -33,8 +33,11 @@
 
     # 1. Partition and format the disk for a UEFI system
     echo "Partitioning and formatting /dev/vda..."
-    printf 'label: gpt\n,1G,U,*\n,,L\n' | sfdisk /dev/vda
-
+    sfdisk /dev/vda <<EOF
+    label: gpt
+    ,1G,U,*
+    ,,L
+    EOF
     partprobe /dev/vda
     sleep 2
     mkfs.fat -F 32 -n boot /dev/vda1
@@ -47,71 +50,44 @@
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
 
-    # 3. Prepare NixOS configuration directory
-    echo "Creating /mnt/etc/nixos directory..."
-    mkdir -p /mnt/etc/nixos
-
-    # 4. Clone config to home directory and copy necessary files
-    echo "Cloning nix-configs to home and copying to /mnt/etc/nixos..."
-    cd /root
-    git clone https://github.com/trojas-gnister/nix-configs
-    cp -r nix-configs/flake.nix nix-configs/hosts nix-configs/iso nix-configs/lib nix-configs/modules /mnt/etc/nixos/
-
-    # 5. Create the VM-specific variables.nix
-    echo "Creating variables.nix for the new VM..."
-    cat > /mnt/etc/nixos/variables.nix <<'EOF'
-{ config, lib, pkgs, ... }:
-{
-  imports = [ ./lib/variables-module.nix ];
-
-  variables = {
-    packages = {
-      system = [
-      ];
-      homeManager = [
-        "kitty"
-        "tmux"
-        "btop"
-        "librewolf"
-        "pavucontrol"
-        "networkmanagerapplet"
-        "blueman"
-        "neovim"
-      ];
-      unfree = [
-        "steamdeck-hw-theme"
-        "steam-jupiter-unwrapped"
-        "steam"
-        "steam-original"
-        "steam-unwrapped"
-        "steam-run"
-        "xow_dongle-firmware"
-      ];
-    };
-
-    user = {
-      name = "user";
-      groups = [  "wheel" "audio" "video" ];
-    };
-
-    firewall = {
-      openTCPPorts = [
-      ];
-      openUDPPorts = [
-      ];
-      openUDPPortRanges = [
-      ];
-      trustedInterfaces = [ ];
-    };
-  };
-}
-EOF
-
-    # 6. Generate the hardware-specific configuration
+    # 3. Generate the hardware-specific configuration first
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 7. Install NixOS using the 'blackspace' configuration from your flake
+    # 4. Clone your NixOS configuration into a temporary location
+    echo "Cloning nix-configs repository..."
+    git clone https://github.com/trojas-gnister/nix-configs /tmp/nix-configs
+
+    # 5. Copy your repository files into the final location
+    echo "Copying repository files into place..."
+    cp -rT /tmp/nix-configs/ /mnt/etc/nixos/
+
+    # 6. Clean up the temporary clone and unnecessary files
+    echo "Cleaning up configuration directory..."
+    rm -rf /tmp/nix-configs
+    rm -f /mnt/etc/nixos/configuration.nix
+    rm -f /mnt/etc/nixos/.gitignore
+
+    # 7. Create a minimal variables.nix for the new VM
+    echo "Creating minimal variables.nix for the new VM..."
+    cat > /mnt/etc/nixos/variables.nix <<'EOF'
+    { config, lib, pkgs, ... }:
+    {
+      imports = [ ./lib/variables-module.nix ];
+
+      variables = {
+        networking.hostname = "nixos-vm";
+
+        user = {
+          name = "user";
+          password = "password";
+          groups = [ "wheel" "audio" "video" "networkmanager" "libvirtd" ];
+        };
+      };
+    }
+    EOF
+
+    # 8. Install NixOS using the 'blackspace' configuration from your flake
     echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
     export NIXPKGS_ALLOW_UNFREE=1
     nixos-install --no-root-passwd --impure --flake /mnt/etc/nixos#blackspace
