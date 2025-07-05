@@ -19,8 +19,7 @@
     kernelParams = [
       "intel_iommu=on"
       "iommu=pt"
-    ] ++ lib.optional (config.variables.networking.staticIP != "")
-         "ip=${config.variables.networking.staticIP}::${config.variables.networking.gateway}:${config.variables.networking.netmask}:${config.variables.networking.hostname}:enp6s0:none";
+    ];
 
     initrd = lib.optionalAttrs (config.variables.ssh.initrd.hostKeyPath != "") {
       availableKernelModules = [ "igc" "vfio_pci" "vfio" "vfio_iommu_type1" ];
