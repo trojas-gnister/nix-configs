@@ -1,23 +1,42 @@
-{ config, pkgs, lib, NixVirt, ... }:
+{ config, lib, pkgs, NixVirt, ... }:
 
 let
-  networkXML = NixVirt.lib.network.writeXML (NixVirt.lib.network.templates.bridge {
-    uuid = "0af7f5c1-ab7f-4bd2-9512-ad18feb93254";
-    subnet_byte = 122;
+  dhcpHosts = lib.mapAttrsToList (name: vm: {
+    inherit name;
+    mac = vm.mac;
+    ip = vm.ip;
+  }) (lib.filterAttrs (name: vm: vm.enable && vm.mac != null && vm.ip != null) config.variables.vms);
+
+  networkXML = NixVirt.lib.network.writeXML {
     name = "default";
-    bridge_name = "virbr0";
-  });
+    uuid = "0af7f5c1-ab7f-4bd2-9512-ad18feb93254";
+    forward.mode = "nat";
+    bridge.name = "virbr0";
+    ip = {
+      address = "192.168.122.1";
+      netmask = "255.255.255.0";
+      dhcp = {
+        range = { start = "192.168.122.100"; end = "192.168.122.254"; };
+        hosts = dhcpHosts;
+      };
+    };
+  };
 in
 {
-  virtualisation.libvirt.enable = true;
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu.ovmf.enable = true;
+  };
 
-  virtualisation.libvirt.connections."qemu:///system".networks = [{
-    definition = networkXML;
-    active = true;
-  }];
+  virtualisation.libvirt = {
+    enable = true;
+    connections."qemu:///system".networks = [{
+      definition = networkXML;
+      active = true;
+    }];
+  };
 
   environment.systemPackages = with pkgs; [
     virt-manager
-    libvirt
   ];
 }

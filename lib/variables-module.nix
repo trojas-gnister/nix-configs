@@ -58,6 +58,16 @@ in {
             type = types.str;
             description = "Unique UUID for the VM.";
           };
+          mac = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Static MAC address for the VM's network interface.";
+          };
+          ip = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Static IP address to assign via DHCP.";
+          };
           isoName = mkOption {
             type = types.nullOr types.str;
             default = null;
@@ -67,6 +77,36 @@ in {
             type = types.bool;
             default = false;
             description = "If true, attach the installer ISO for initial installation.";
+          };
+          forwardedPorts = mkOption {
+            type = types.listOf (types.submodule {
+              options = {
+                proto = mkOption {
+                  type = types.enum [ "tcp" "udp" ];
+                  description = "Protocol of the port to forward.";
+                };
+                sourcePort = mkOption {
+                  type = types.port;
+                  description = "Port on the host to listen on.";
+                };
+                destinationPort = mkOption {
+                  type = types.nullOr types.port;
+                  default = null;
+                  description = "Port on the guest to forward to (defaults to sourcePort).";
+                };
+              };
+            });
+            default = [];
+            description = "A list of ports to forward from the host to this VM.";
+          };
+          firewall = mkOption {
+            type = types.submodule {
+              options = {
+                openTCPPorts = mkOption { type = types.listOf types.port; default = []; };
+                openUDPPorts = mkOption { type = types.listOf types.port; default = []; };
+              };
+            };
+            default = {};
           };
         };
       }));

@@ -132,6 +132,7 @@
           ./modules/common/mako.nix
           ./modules/common/virtualisation.nix
           ./modules/vms/vm-generator.nix
+          ./modules/vms/port-forwarding.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name}.xdg.configFile = lib.mkMerge [
               (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
@@ -177,11 +178,13 @@
           home-manager.nixosModules.home-manager
           ./modules/common/user.nix
           ./modules/common/networking.nix
+          ./modules/common/audio.nix
           ./modules/common/firewall.nix
           ./modules/common/ssh.nix
           ./modules/common/system-packages.nix
           ./modules/common/home-manager.nix
           ./modules/common/bluetooth.nix
+          ./modules/common/neovim.nix
           ./modules/common/podman.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
