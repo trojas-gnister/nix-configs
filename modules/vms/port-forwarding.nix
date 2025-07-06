@@ -17,5 +17,9 @@ let
   ) (lib.attrNames vmsToForward);
 in
 {
-  networking.firewall.forwardPorts = forwardingRules;
+  networking.nat = lib.mkIf (forwardingRules != []) {
+    enable = true;
+    externalInterface = config.variables.networking.externalInterface;
+    forwardPorts = forwardingRules;
+  };
 }

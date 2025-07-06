@@ -115,6 +115,11 @@ in {
     };
     networking = {
       hostname = mkOption { type = types.str; default = "hostname"; };
+      externalInterface = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "The primary external-facing network interface for NAT.";
+      };
     };
     ssh = {
       initrd = {
