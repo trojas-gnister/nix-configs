@@ -56,8 +56,8 @@ in
 
           ${lib.optionalString (vm.enable && vm.firstBoot && vm.isoName != null) ''
             echo "Processing ISO for VM: ${name}"
-            # The nix path-info command gives the direct path to the ISO file.
-            src_iso_path=$(${pkgs.nix}/bin/nix path-info -S ${customIsoImages.${vm.isoName}})
+            # Use the --json flag and parse with jq for a robust solution
+            src_iso_path=$(${pkgs.nix}/bin/nix path-info --json -S ${customIsoImages.${vm.isoName}} | ${pkgs.jq}/bin/jq -r '.[0].path')
             destPath="/var/lib/libvirt/images/${vm.isoName}.iso"
             
             if [ ! -f "$destPath" ] || ! ${pkgs.diffutils}/bin/cmp -s "$src_iso_path" "$destPath"; then
