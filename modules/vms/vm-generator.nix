@@ -56,15 +56,14 @@ in
 
           ${lib.optionalString (vm.enable && vm.firstBoot && vm.isoName != null) ''
             echo "Processing ISO for VM: ${name}"
-            # The derivation produces a directory; we need to find the .iso inside it.
             src_iso_dir="${customIsoImages.${vm.isoName}}"
             destPath="/var/lib/libvirt/images/${vm.isoName}.iso"
 
-            # Find the single .iso file within the source directory.
             shopt -s nullglob
-            iso_files=("$src_iso_dir"/*.iso)
+            # Look inside the /iso subdirectory for the .iso file
+            iso_files=("$src_iso_dir"/iso/*.iso)
             if [ ''${#iso_files[@]} -ne 1 ]; then
-              echo "ERROR: Expected to find exactly one .iso file in $src_iso_dir, but found ''${#iso_files[@]}." >&2
+              echo "ERROR: Expected to find exactly one .iso file in $src_iso_dir/iso, but found ''${#iso_files[@]}." >&2
               exit 1
             fi
             src_iso_path="''${iso_files[0]}"
