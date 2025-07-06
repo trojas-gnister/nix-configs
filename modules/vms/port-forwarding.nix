@@ -9,11 +9,17 @@ let
     let
       vm = vms.${vmName};
     in
-      lib.map (port: {
-        inherit (port) proto sourcePort;
-        destination = vm.ip;
-        destPort = port.destinationPort;
-      }) vm.forwardedPorts
+      lib.map (port:
+        let
+          finalDestPort = if port.destinationPort == null
+                          then port.sourcePort
+                          else port.destinationPort;
+        in
+        {
+          inherit (port) proto sourcePort;
+          destination = "${vm.ip}:${toString finalDestPort}";
+        }
+      ) vm.forwardedPorts
   ) (lib.attrNames vmsToForward);
 in
 {
