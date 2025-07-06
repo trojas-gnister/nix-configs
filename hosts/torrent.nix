@@ -19,9 +19,11 @@
   boot = {
     kernelParams = [ "console=ttyS0,115200" ];
     loader = {
-      systemd-boot.enable = true;
+      systemd-boot = {
+        enable = true;
+        consoleMode = "1"; 
+      };
       efi.canTouchEfiVariables = true;
-      consoleMode = "serial";
     };
   };
 }
