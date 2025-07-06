@@ -179,15 +179,11 @@
           ./modules/common/networking.nix
           ./modules/common/audio.nix
           ./modules/common/firewall.nix
-          ./modules/common/graphics.nix
           ./modules/common/ssh.nix
           ./modules/common/system-packages.nix
           ./modules/common/home-manager.nix
-          ./modules/common/sway.nix
-          ./modules/common/waybar.nix
           ./modules/common/bluetooth.nix
           ./modules/common/neovim.nix
-          ./modules/common/mako.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
               xdg.configFile = lib.mkMerge [
@@ -201,7 +197,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit self; };
         modules = [
-          ./hardware-configuration.nix
+          # ./hardware-configuration.nix
           ./variables.nix
           ./hosts/gamingserver.nix
           home-manager.nixosModules.home-manager

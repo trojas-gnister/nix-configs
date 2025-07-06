@@ -44,6 +44,11 @@ in {
             type = types.str;
             description = "Path to the qcow2 disk image for the VM.";
           };
+          diskSize = mkOption {
+            type = types.int;
+            default = 32;
+            description = "Disk size in GiB for the new VM image.";
+          };
           memorySize = mkOption {
             type = types.int;
             default = 4;
@@ -111,4 +116,3 @@ in {
     };
   };
 }
-

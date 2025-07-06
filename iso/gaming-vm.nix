@@ -17,11 +17,10 @@
     tmux
     gptfdisk
     parted
+    rsync
   ];
 
   environment.etc."profile.d/install.sh".text = ''
-    # This script will run once upon login and perform a fully automated installation.
-
     if [ -f /tmp/install_started.lock ]; then
       echo "Installation script has already run. Not running again."
       exit 0
@@ -29,9 +28,8 @@
     touch /tmp/install_started.lock
 
     echo "--- STARTING AUTOMATED NIXOS INSTALLATION ---"
-    set -e # Exit immediately if a command fails
+    set -e
 
-    # 1. Partition and format the disk for a UEFI system
     echo "Partitioning and formatting /dev/vda..."
     sfdisk /dev/vda <<EOF
     label: gpt
@@ -43,33 +41,24 @@
     mkfs.fat -F 32 -n boot /dev/vda1
     mkfs.ext4 -F -L root /dev/vda2
 
-    # 2. Mount the filesystems
     echo "Mounting filesystems..."
     mkdir -p /mnt
     mount /dev/disk/by-label/root /mnt
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
 
-    # 3. Generate the hardware-specific configuration first
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
 
-    # 4. Clone your NixOS configuration into a temporary location
     echo "Cloning nix-configs repository..."
     git clone https://github.com/trojas-gnister/nix-configs /tmp/nix-configs
 
-    # 5. Copy your repository files into the final location
     echo "Copying repository files into place..."
-    cp -rT /tmp/nix-configs/ /mnt/etc/nixos/
-
-    # 6. Clean up the temporary clone and unnecessary files
-    echo "Cleaning up configuration directory..."
-    rm -rf /tmp/nix-configs
-    rm -f /mnt/etc/nixos/configuration.nix
-    rm -f /mnt/etc/nixos/.gitignore
-    rm -rf /mnt/etc/nixos/.git
+    rsync -a --exclude 'hardware-configuration.nix' --exclude '.git' --exclude 'configuration.nix' /tmp/nix-configs/ /mnt/etc/nixos/
     
-    # 7. Create a minimal variables.nix for the new VM
+    echo "Cleaning up temporary clone..."
+    rm -rf /tmp/nix-configs
+    
     echo "Creating minimal variables.nix for the new VM..."
     cat > /mnt/etc/nixos/variables.nix <<'EOF'
     { config, lib, pkgs, ... }:
@@ -88,7 +77,6 @@
     }
     EOF
 
-    # 8. Install NixOS using the 'blackspace' configuration from your flake
     echo "Installing NixOS from flake: /mnt/etc/nixos#blackspace"
     export NIXPKGS_ALLOW_UNFREE=1
     nixos-install --no-root-passwd --impure --flake /mnt/etc/nixos#blackspace

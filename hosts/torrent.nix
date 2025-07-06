@@ -15,11 +15,13 @@
     enable = true;
     wantedBy = [ "getty.target" ];
   };
+
   boot = {
     kernelParams = [ "console=ttyS0,115200" ];
     loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
+      consoleMode = "serial";
     };
   };
 }
