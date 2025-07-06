@@ -56,8 +56,8 @@ in
 
           ${lib.optionalString (vm.enable && vm.firstBoot && vm.isoName != null) ''
             echo "Processing ISO for VM: ${name}"
-            # Use the --json flag and parse with jq for a robust solution
-            src_iso_path=$(${pkgs.nix}/bin/nix path-info --json -S ${customIsoImages.${vm.isoName}} | ${pkgs.jq}/bin/jq -r '.[0].path')
+            # Correct jq command: .path instead of .[0].path
+            src_iso_path=$(${pkgs.nix}/bin/nix path-info --json -S ${customIsoImages.${vm.isoName}} | ${pkgs.jq}/bin/jq -r '.path')
             destPath="/var/lib/libvirt/images/${vm.isoName}.iso"
             
             if [ ! -f "$destPath" ] || ! ${pkgs.diffutils}/bin/cmp -s "$src_iso_path" "$destPath"; then
