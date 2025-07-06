@@ -31,14 +31,12 @@
     set -e
 
     echo "Partitioning and formatting /dev/vda for BIOS..."
-    # Create a single Linux partition on an MBR disk and mark it bootable
     sfdisk /dev/vda <<EOF
     label: dos
     ,,L,*
     EOF
     partprobe /dev/vda
     sleep 2
-    # Format the single partition as ext4 with the label 'nixos'
     mkfs.ext4 -L nixos /dev/vda1
 
     echo "Waiting for udev to create disk labels..."
@@ -47,7 +45,6 @@
 
     echo "Mounting filesystems..."
     mkdir -p /mnt
-    # Mount the single root partition
     mount /dev/disk/by-label/nixos /mnt
 
     echo "Generating hardware configuration..."
@@ -79,6 +76,14 @@
       };
     }
     EOF
+
+    # --- Create qBittorrent Directories ---
+    echo "Creating directories for qBittorrent..."
+    # The default user in the VM is 'user' with UID 1000 and GID 100 ('users' group)
+    mkdir -p /mnt/home/user/qbittorrent/config
+    mkdir -p /mnt/home/user/qbittorrent/downloads
+    chown -R 1000:100 /mnt/home/user/qbittorrent
+    # --- End Section ---
 
     echo "Installing NixOS from flake: /mnt/etc/nixos#krawlspace"
     export NIXPKGS_ALLOW_UNFREE=1
