@@ -21,9 +21,7 @@
     loader = {
       grub = {
         enable = true;
-        device = "/dev/vda"; 
-        terminal = [ "console" "serial" ];
-        serial = "ttyS0,115200";
+        device = "/dev/vda";
       };
     };
   };
