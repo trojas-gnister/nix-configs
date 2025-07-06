@@ -177,17 +177,16 @@
           home-manager.nixosModules.home-manager
           ./modules/common/user.nix
           ./modules/common/networking.nix
-          ./modules/common/audio.nix
           ./modules/common/firewall.nix
           ./modules/common/ssh.nix
           ./modules/common/system-packages.nix
           ./modules/common/home-manager.nix
           ./modules/common/bluetooth.nix
-          ./modules/common/neovim.nix
+          ./modules/common/podman.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
-              xdg.configFile = lib.mkMerge [
-                (import ./modules/common/podman-quadlet-definitions/qbittorrentvpn.nix { inherit pkgs config lib; })
+              imports = [
+                ./modules/common/podman-quadlet-definitions/qbittorrentvpn.nix
               ];
             };
           })
@@ -197,7 +196,6 @@
         system = "x86_64-linux";
         specialArgs = { inherit self; };
         modules = [
-          # ./hardware-configuration.nix
           ./variables.nix
           ./hosts/gamingserver.nix
           home-manager.nixosModules.home-manager

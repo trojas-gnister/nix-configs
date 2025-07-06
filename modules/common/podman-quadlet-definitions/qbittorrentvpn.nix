@@ -1,10 +1,10 @@
 { pkgs, config, lib, ... }:
 
 let
-  homeDir = "/home/iskry"; 
+  homeDir = config.home.homeDirectory;
 in
 {
-  "containers/systemd/qbittorrentvpn.container" = {
+  xdg.configFile."containers/systemd/qbittorrentvpn.container" = {
     text = ''
       [Unit]
       Description=qBittorrentVPN Container
