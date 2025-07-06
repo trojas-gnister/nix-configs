@@ -30,22 +30,25 @@
     echo "--- STARTING AUTOMATED NIXOS INSTALLATION ---"
     set -e
 
-    echo "Partitioning and formatting /dev/vda..."
+    echo "Partitioning and formatting /dev/vda for BIOS..."
+    # Create a single Linux partition on an MBR disk and mark it bootable
     sfdisk /dev/vda <<EOF
-    label: gpt
-    ,1G,U,*
-    ,,L
+    label: dos
+    ,,L,*
     EOF
     partprobe /dev/vda
     sleep 2
-    mkfs.fat -F 32 -n boot /dev/vda1
-    mkfs.ext4 -F -L root /dev/vda2
+    # Format the single partition as ext4 with the label 'nixos'
+    mkfs.ext4 -L nixos /dev/vda1
+
+    echo "Waiting for udev to create disk labels..."
+    udevadm settle
+    sleep 2
 
     echo "Mounting filesystems..."
     mkdir -p /mnt
-    mount /dev/disk/by-label/root /mnt
-    mkdir -p /mnt/boot
-    mount /dev/disk/by-label/boot /mnt/boot
+    # Mount the single root partition
+    mount /dev/disk/by-label/nixos /mnt
 
     echo "Generating hardware configuration..."
     nixos-generate-config --root /mnt
@@ -82,5 +85,7 @@
     nixos-install --no-root-passwd --impure --flake /mnt/etc/nixos#krawlspace
 
     echo "--- INSTALLATION COMPLETE ---"
+    echo "VM will now power off."
+    poweroff
   '';
 }

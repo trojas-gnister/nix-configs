@@ -17,7 +17,6 @@ in
           templateConfig = {
             inherit name;
             uuid = vm.uuid;
-            uefi = true;
             memory = { count = vm.memorySize; unit = "GiB"; };
             storage_vol = vm.diskPath;
             bridge_name = "virbr0";
@@ -27,6 +26,7 @@ in
           });
 
           baseTemplate = NixVirt.lib.domain.templates.pc templateConfig;
+
           headlessDevices = builtins.removeAttrs baseTemplate.devices [ "graphics" "video" "sound" "audio" "input" "channel" "redirdev" "hub" ];
           finalDevices = headlessDevices // { serial = [ { type = "pty"; } ]; console = [ { type = "pty"; } ]; };
           finalConfig = baseTemplate // { devices = finalDevices; };
@@ -56,18 +56,10 @@ in
 
           ${lib.optionalString (vm.enable && vm.firstBoot && vm.isoName != null) ''
             echo "Processing ISO for VM: ${name}"
-            isoBuildDir=$(${pkgs.nix}/bin/nix path-info -S ${customIsoImages.${vm.isoName}})
+            # The nix path-info command gives the direct path to the ISO file.
+            src_iso_path=$(${pkgs.nix}/bin/nix path-info -S ${customIsoImages.${vm.isoName}})
             destPath="/var/lib/libvirt/images/${vm.isoName}.iso"
-
-            shopt -s nullglob
-            iso_files=("$isoBuildDir/iso/"*.iso)
-            if [ ''${#iso_files[@]} -ne 1 ]; then
-              echo "ERROR: Expected to find exactly one .iso file in $isoBuildDir/iso, but found ''${#iso_files[@]}." >&2
-              exit 1
-            fi
             
-            src_iso_path="''${iso_files[0]}"
-
             if [ ! -f "$destPath" ] || ! ${pkgs.diffutils}/bin/cmp -s "$src_iso_path" "$destPath"; then
               echo "Copying $src_iso_path to $destPath"
               cp "$src_iso_path" "$destPath"

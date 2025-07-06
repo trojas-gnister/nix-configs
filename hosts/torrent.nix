@@ -19,11 +19,12 @@
   boot = {
     kernelParams = [ "console=ttyS0,115200" ];
     loader = {
-      systemd-boot = {
+      grub = {
         enable = true;
-        consoleMode = "1"; 
+        device = "/dev/vda"; 
+        terminal = [ "console" "serial" ];
+        serial = "ttyS0,115200";
       };
-      efi.canTouchEfiVariables = true;
     };
   };
 }
