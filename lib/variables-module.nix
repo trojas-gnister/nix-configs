@@ -58,15 +58,10 @@ in {
             type = types.str;
             description = "Unique UUID for the VM.";
           };
-          mac = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Static MAC address for the VM's network interface.";
-          };
           ip = mkOption {
             type = types.nullOr types.str;
             default = null;
-            description = "Static IP address to assign via DHCP.";
+            description = "Manually updated IP address of the VM for port forwarding.";
           };
           isoName = mkOption {
             type = types.nullOr types.str;

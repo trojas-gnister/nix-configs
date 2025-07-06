@@ -1,4 +1,4 @@
-{ config, lib, pkgs, NixVirt, customIsoImages ? {}, ... }:
+{ config, lib, pkgs, NixVirt, ... }:
 
 with lib;
 
@@ -60,7 +60,6 @@ in
             destPath="/var/lib/libvirt/images/${vm.isoName}.iso"
 
             shopt -s nullglob
-            # Look inside the /iso subdirectory for the .iso file
             iso_files=("$src_iso_dir"/iso/*.iso)
             if [ ''${#iso_files[@]} -ne 1 ]; then
               echo "ERROR: Expected to find exactly one .iso file in $src_iso_dir/iso, but found ''${#iso_files[@]}." >&2
