@@ -73,17 +73,19 @@
           password = "password";
           groups = [ "wheel" "audio" "video" "networkmanager" "libvirtd" ];
         };
+
+        firewall = {
+          openTCPPorts = [ 8000 8999 ];
+          openUDPPorts = [ 8999 ];
+        };
       };
     }
     EOF
 
-    # --- Create qBittorrent Directories ---
     echo "Creating directories for qBittorrent..."
-    # The default user in the VM is 'user' with UID 1000 and GID 100 ('users' group)
     mkdir -p /mnt/home/user/qbittorrent/config
     mkdir -p /mnt/home/user/qbittorrent/downloads
     chown -R 1000:100 /mnt/home/user/qbittorrent
-    # --- End Section ---
 
     echo "Installing NixOS from flake: /mnt/etc/nixos#krawlspace"
     export NIXPKGS_ALLOW_UNFREE=1
