@@ -4,7 +4,7 @@ let
   homeDir = config.home.homeDirectory;
 in
 {
-  xdg.configFile."containers/systemd/qbittorrentvpn.container" = {
+  "containers/systemd/qbittorrentvpn.container" = {
     text = ''
       [Unit]
       Description=qBittorrentVPN Container
@@ -18,7 +18,7 @@ in
       Volume=${homeDir}/qbittorrent/downloads:/downloads
       Environment=VPN_ENABLED=yes
       Environment=VPN_TYPE=wireguard
-      Environment=LAN_NETWORK=192.168.1.0/24
+      Environment=LAN_NETWORK=192.168.122.0/24,192.168.1.0/24
       Environment=PUID=1000
       Environment=PGID=1000
       PublishPort=8000:8080
