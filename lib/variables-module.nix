@@ -73,27 +73,6 @@ in {
             default = false;
             description = "If true, attach the installer ISO for initial installation.";
           };
-          forwardedPorts = mkOption {
-            type = types.listOf (types.submodule {
-              options = {
-                proto = mkOption {
-                  type = types.enum [ "tcp" "udp" ];
-                  description = "Protocol of the port to forward.";
-                };
-                sourcePort = mkOption {
-                  type = types.port;
-                  description = "Port on the host to listen on.";
-                };
-                destinationPort = mkOption {
-                  type = types.nullOr types.port;
-                  default = null;
-                  description = "Port on the guest to forward to (defaults to sourcePort).";
-                };
-              };
-            });
-            default = [];
-            description = "A list of ports to forward from the host to this VM.";
-          };
           firewall = mkOption {
             type = types.submodule {
               options = {
@@ -110,11 +89,6 @@ in {
     };
     networking = {
       hostname = mkOption { type = types.str; default = "hostname"; };
-      externalInterface = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        description = "The primary external-facing network interface for NAT.";
-      };
     };
     ssh = {
       initrd = {

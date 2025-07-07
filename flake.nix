@@ -132,7 +132,6 @@
           ./modules/common/mako.nix
           ./modules/common/virtualisation.nix
           ./modules/vms/vm-generator.nix
-          ./modules/vms/port-forwarding.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name}.xdg.configFile = lib.mkMerge [
               (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
