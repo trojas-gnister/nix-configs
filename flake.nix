@@ -160,7 +160,7 @@
           ./modules/common/ssh.nix
           ./modules/common/system-packages.nix
           ./modules/common/home-manager.nix
-          ./modules/common/sway.nix
+          ./modules/common/hyprland.nix
           ./modules/common/waybar.nix
           ./modules/common/bluetooth.nix
           ./modules/common/neovim.nix

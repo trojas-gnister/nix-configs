@@ -89,6 +89,16 @@ in {
     };
     networking = {
       hostname = mkOption { type = types.str; default = "hostname"; };
+      externalInterface = mkOption {
+        type = types.str;
+        default = "eth0";
+        description = "The external network interface for NAT (e.g., wlo1 for WiFi).";
+      };
+      internalInterfaces = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "List of internal network interfaces for NAT (e.g., [ 'virbr0' ] for libvirt bridge).";
+      };
     };
     ssh = {
       initrd = {
