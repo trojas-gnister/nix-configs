@@ -42,7 +42,8 @@
           };
           touchdevice = {
             output = "eDP-1";
-            transform = 3;
+            #NOTE for steam deck
+            # transform = 3;
           };
         };
         general = {

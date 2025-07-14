@@ -54,7 +54,7 @@ in
             aghost7/rust-dev:noble \
             tmux new
           '';
-          nix-sync-config = "echo 'Ensure paths are correct first!' && sudo mv /etc/nixos/lib /etc/nixos/hosts /etc/nixos/modules /etc/nixos/flake.nix ~/nix.bak && sudo cp -r ~/Development/nix-configs/lib ~/Development/nix-configs/hosts ~/Development/nix-configs/modules ~/Development/nix-configs/flake.nix /etc/nixos";
+          nix-sync-config = "echo 'Backing up old config to ~/nix.bak...' && mkdir -p ~/nix.bak && sudo mv /etc/nixos/{lib,hosts,modules,iso,flake.nix} ~/nix.bak/ && echo 'Copying new config to /etc/nixos...' && sudo cp -r ~/Development/nix-configs/{lib,hosts,modules,iso,flake.nix} /etc/nixos/";
         };
       };
 
