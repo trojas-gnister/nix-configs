@@ -3,12 +3,19 @@
   services.xserver = {
     enable = true;
   };
+
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = config.variables.user.name;
+  };
+
   services.displayManager.sddm.enable = true;
+
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-    withUWSM = true;
   };
+
   environment.systemPackages = with pkgs; [
     kitty
     waybar
@@ -21,18 +28,22 @@
     slurp
     wl-clipboard
   ];
+
   users.users.${config.variables.user.name}.extraGroups = [ "input" ];
   security.pam.services.swaylock = {};
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
   home-manager.users.${config.variables.user.name} = { pkgs, ... }: {
     wayland.windowManager.hyprland = {
       enable = true;
       plugins = [];
       settings = {
-	monitor = [
-  		"eDP-1,preferred,auto,1, transform, 3" # Had a space before transform
-  		", preferred, auto,1" # Malformed fallback rule
-	];
+
+        monitor = [
+          "eDP-1,preferred,auto,1" # Set laptop screen to normal (0 degrees)
+          ",preferred,auto,1"      # Fallback for any other connected monitor
+        ];
+
         input = {
           kb_layout = "us";
           follow_mouse = 1;
@@ -42,10 +53,10 @@
           };
           touchdevice = {
             output = "eDP-1";
-            #NOTE for steam deck
-            # transform = 3;
+            # transform is 0 by default, which now matches the screen
           };
         };
+
         general = {
           gaps_in = 5;
           gaps_out = 10;
@@ -54,6 +65,7 @@
           "col.inactive_border" = "rgba(595959aa)";
           layout = "dwindle";
         };
+
         decoration = {
           rounding = 10;
           shadow = {
@@ -68,6 +80,7 @@
             passes = 1;
           };
         };
+
         animations = {
           enabled = true;
           bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
@@ -79,13 +92,16 @@
             "workspaces, 1, 6, default"
           ];
         };
+
         dwindle = {
           pseudotile = true;
           preserve_split = true;
         };
+
         master = {
           new_status = "master";
         };
+
         "$mainMod" = "SUPER";
 
         windowrulev2 = [
