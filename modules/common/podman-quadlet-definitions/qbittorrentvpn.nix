@@ -4,7 +4,7 @@ let
   homeDir = config.home.homeDirectory;
 in
 {
-  "containers/systemd/qbittorrentvpn.container" = {
+  xdg.configFile."containers/systemd/user/qbittorrentvpn.container" = {
     text = ''
       [Unit]
       Description=qBittorrentVPN Container
