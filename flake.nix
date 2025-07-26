@@ -187,13 +187,13 @@
           ./modules/common/neovim.nix
           ./modules/common/podman.nix
           ({ config, lib, pkgs, ... }: {
-            home-manager.users.${config.variables.user.name} = {
-              imports = [
-                ./modules/common/podman-quadlet-definitions/qbittorrentvpn.nix
-              ];
-            };
-          })
+      home-manager.users.${config.variables.user.name} = {
+        xdg.configFile = lib.mkMerge [
+          (import ./modules/common/podman-quadlet-definitions/qbittorrentvpn.nix { inherit pkgs config lib; })
         ];
+      };
+    })
+             ];
       };
       blackspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
