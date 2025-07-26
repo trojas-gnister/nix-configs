@@ -9,7 +9,7 @@
       [Container]
       Image=lscr.io/linuxserver/librewolf:latest
       ContainerName=librewolf-quadlet
-      Network=host
+      PublishPort=3001:3000
       Volume=librewolf-config:/config
       Environment=PUID=1000
       Environment=PGID=1000

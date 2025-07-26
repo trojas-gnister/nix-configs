@@ -78,6 +78,7 @@
           ./modules/common/sway.nix
           ./modules/common/waybar.nix
           ./modules/common/mako.nix
+	  ./modules/common/wireguard.nix
           ./modules/vms/vm-generator.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {

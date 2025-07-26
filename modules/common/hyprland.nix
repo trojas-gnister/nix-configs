@@ -1,3 +1,5 @@
+### ./modules/common/hyprland.nix
+
 { config, lib, pkgs, inputs ? {}, ... }:
 {
   services.xserver = {
@@ -178,6 +180,12 @@
           ", Print, exec, grim -g \"$(slurp)\" - | wl-copy"
           "SHIFT, Print, exec, grim - | wl-copy"
           "$mainMod, x, exec, swaylock"
+          ", F1, exec, brightnessctl set 5%-"
+          ", F2, exec, brightnessctl set +5%"
+          ", F10, exec, pactl set-sink-mute @DEFAULT_SINK@ toggle"
+          ", F11, exec, pactl set-sink-volume @DEFAULT_SINK@ -5%"
+          ", F12, exec, pactl set-sink-volume @DEFAULT_SINK@ +5%"
+          "$mainMod, B, exec, kbd-backlight-toggle"
         ];
       };
     };

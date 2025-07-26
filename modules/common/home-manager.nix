@@ -71,7 +71,6 @@ in
         mount_program = "${pkgs.fuse-overlayfs}/bin/fuse-overlayfs"
         mountopt = "nodev,metacopy=on"
       '';
-
     };
   };
 }

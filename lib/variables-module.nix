@@ -137,6 +137,12 @@ in {
         type = types.listOf types.str;
         default = [];
       };
+      };
+    wireguard = {
+  clientConfigPath = mkOption {
+    type = types.str;
+    default = "";
+  };
     };
   };
 }

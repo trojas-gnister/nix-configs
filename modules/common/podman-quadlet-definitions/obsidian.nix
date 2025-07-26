@@ -9,8 +9,8 @@
       [Container]
       Image=lscr.io/linuxserver/obsidian:latest
       ContainerName=obsidian-quadlet
-      PublishPort=127.0.0.1:3006:3000
-      PublishPort=127.0.0.1:3007:3001
+      PublishPort=3006:3000
+      PublishPort=3007:3001
       Volume=obsidian-config:/config
       Environment=PUID=1000
       Environment=PGID=1000

@@ -1,10 +1,10 @@
 { pkgs, config, lib, ... }:
 
 let
-  homeDir = config.home.homeDirectory;
+  homeDir = "/home/${config.variables.user.name}";
 in
 {
-  xdg.configFile."containers/systemd/user/qbittorrentvpn.container" = {
+  "containers/systemd/user/qbittorrentvpn.container" = {
     text = ''
       [Unit]
       Description=qBittorrentVPN Container
