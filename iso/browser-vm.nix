@@ -1,4 +1,3 @@
-# iso/browser-vm.nix
 { pkgs, nixpkgs }:
 {
   imports = [
@@ -76,8 +75,8 @@
         };
 
         firewall = {
-          openTCPPorts = [ 80 443 8001 8002 8003 8004 ];
-          openUDPPorts = [ 443 ];
+          openTCPPorts = [ 3001 3004 ];
+          openUDPPorts = [ ];
         };
       };
     }

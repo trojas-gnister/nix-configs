@@ -1,4 +1,3 @@
-# hosts/browser.nix
 { config, lib, pkgs, ... }:
 
 {

@@ -1,4 +1,3 @@
-# modules/common/podman-quadlet-definitions/librewolf-https.nix
 { pkgs, config, lib, ... }:
 {
   "containers/systemd/user/librewolf.container" = {
@@ -9,24 +8,16 @@
 
       [Container]
       Image=lscr.io/linuxserver/librewolf:latest
-      ContainerName=librewolf-https
-      
+      ContainerName=librewolf-quadlet
+      PublishPort=3001:3001
       Volume=librewolf-config:/config
-      
       Environment=PUID=1000
       Environment=PGID=1000
       Environment=TZ=${config.time.timeZone}
-      Environment=CUSTOM_PORT=3000
-      Environment=CUSTOM_HTTPS_PORT=3001
-      Environment=TITLE=LibreWolf Browser
-      
-      PublishPort=8001:3000
-      PublishPort=8002:3001
-      
       ShmSize=1gb
 
       [Service]
-      Restart=unless-stopped
+      Restart=always
 
       [Install]
       WantedBy=default.target

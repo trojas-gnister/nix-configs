@@ -78,7 +78,7 @@
           ./modules/common/sway.nix
           ./modules/common/waybar.nix
           ./modules/common/mako.nix
-	  ./modules/common/wireguard.nix
+	 ./modules/common/wireguard.nix
           ./modules/vms/vm-generator.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
@@ -195,37 +195,6 @@
     })
              ];
       };
-browserspace = nixpkgs.lib.nixosSystem {
-  system = "x86_64-linux";
-  specialArgs = { inherit self; };
-  modules = [
-    ./hardware-configuration.nix
-    ./variables.nix
-    ./hosts/browser.nix
-    home-manager.nixosModules.home-manager
-    ./modules/common/user.nix
-    ./modules/common/networking.nix
-    ./modules/common/audio.nix
-    ./modules/common/firewall.nix
-    ./modules/common/ssh.nix
-    ./modules/common/system-packages.nix
-    ./modules/common/home-manager.nix
-    ./modules/common/bluetooth.nix
-    ./modules/common/neovim.nix
-    ./modules/common/podman.nix
-    ({ config, lib, pkgs, ... }: {
-      home-manager.users.${config.variables.user.name} = {
-        xdg.configFile = lib.mkMerge [
-          (import ./modules/common/podman-quadlet-definitions/swag.nix { inherit pkgs config lib; })
-          (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
-          (import ./modules/common/podman-quadlet-definitions/chromium.nix { inherit pkgs config lib; })
-          (import ./modules/common/podman-quadlet-volumes/swag-config.nix { inherit pkgs config lib; })
-        ];
-      };
-    })
-  ];
-};
-
       blackspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit self; };
@@ -260,6 +229,34 @@ browserspace = nixpkgs.lib.nixosSystem {
                 (import ./modules/common/podman-quadlet-definitions/openwebui.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-definitions/chromium.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
+              ];
+            };
+          })
+        ];
+      };
+      browserspace = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit self; };
+        modules = [
+          ./hardware-configuration.nix
+          ./variables.nix
+          ./hosts/browser.nix
+          home-manager.nixosModules.home-manager
+          ./modules/common/user.nix
+          ./modules/common/networking.nix
+          ./modules/common/audio.nix
+          ./modules/common/firewall.nix
+          ./modules/common/ssh.nix
+          ./modules/common/system-packages.nix
+          ./modules/common/home-manager.nix
+          ./modules/common/bluetooth.nix
+          ./modules/common/neovim.nix
+          ./modules/common/podman.nix
+          ({ config, lib, pkgs, ... }: {
+            home-manager.users.${config.variables.user.name} = {
+              xdg.configFile = lib.mkMerge [
+                (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/chromium.nix { inherit pkgs config lib; })
               ];
             };
           })
