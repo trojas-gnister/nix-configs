@@ -55,10 +55,10 @@
 
     echo "Copying repository files into place..."
     rsync -a --exclude 'hardware-configuration.nix' --exclude '.git' --exclude 'configuration.nix' /tmp/nix-configs/ /mnt/etc/nixos/
-    
+
     echo "Cleaning up temporary clone..."
     rm -rf /tmp/nix-configs
-    
+
     echo "Creating minimal variables.nix for the new VM..."
     cat > /mnt/etc/nixos/variables.nix <<'EOF'
     { config, lib, pkgs, ... }:
@@ -71,7 +71,16 @@
         user = {
           name = "user";
           password = "password";
-          groups = [ "wheel" "audio" "video" "networkmanager" "libvirtd" ];
+          groups = [ "wheel" "audio" "video" "networkmanager" "podman" "input" "render" ];
+        };
+
+        packages = {
+          unfree = [ "steam" ];
+        };
+
+        firewall = {
+          openTCPPorts = [ 11434 3000 47984 47989 47990 48010 27031 27032 27033 27034 27035 27036 ];
+          openUDPPorts = [ 27031 27032 27033 27034 27035 27036 47998 47999 48000 ];
         };
       };
     }

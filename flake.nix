@@ -195,10 +195,11 @@
     })
              ];
       };
-      blackspace = nixpkgs.lib.nixosSystem {
+   blackspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit self; };
         modules = [
+          ./hardware-configuration.nix
           ./variables.nix
           ./hosts/gamingserver.nix
           home-manager.nixosModules.home-manager
@@ -207,7 +208,7 @@
               gs-launcher = self.packages.${pkgs.system}.gs-launcher;
             })];
           })
-          ./modules/common/steam.nix
+          ./modules/common/unfree.nix
           ./modules/common/user.nix
           ./modules/common/networking.nix
           ./modules/common/audio.nix
@@ -217,9 +218,10 @@
           ./modules/common/system-packages.nix
           ./modules/common/podman.nix
           ./modules/common/home-manager.nix
-          ./modules/common/sway.nix
+          ./modules/common/hyprland.nix
           ./modules/common/waybar.nix
           ./modules/common/mako.nix
+          ./modules/common/sunshine.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
               xdg.configFile = lib.mkMerge [
@@ -227,8 +229,6 @@
                 (import ./modules/common/podman-quadlet-volumes/open-webui-data.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-definitions/ollama.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-definitions/openwebui.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/chromium.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
               ];
             };
           })
