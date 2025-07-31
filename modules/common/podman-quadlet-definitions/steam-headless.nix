@@ -14,23 +14,23 @@
       PodmanArgs=--replace
       # GPU access - Intel/AMD GPU support
       PodmanArgs=--device=/dev/dri
-      # Controller/Gamepad support
-      PodmanArgs=--device=/dev/uinput:/dev/uinput:rw
+      # Controller/Gamepad support - run as root to access uinput
+      PodmanArgs=--device=/dev/uinput
       # Audio device access (PulseAudio)
       PodmanArgs=--device=/dev/snd
       # Security options for GPU and device access
       PodmanArgs=--security-opt=seccomp:unconfined
       PodmanArgs=--security-opt=apparmor:unconfined
-      # Privileged access for full hardware compatibility
+      # Run with privileges needed for uinput access
       PodmanArgs=--privileged
 
       # Required capabilities
       AddCapability=NET_ADMIN
       AddCapability=SYS_ADMIN
 
-      # Environment variables
-      Environment=PUID=1001
-      Environment=PGID=100
+      # Environment variables - run as root for device access
+      Environment=PUID=0
+      Environment=PGID=0
       Environment=TZ=${config.time.timeZone}
       Environment=DRINODE=/dev/dri/renderD128
       Environment=MODE=primary
@@ -38,6 +38,7 @@
       Environment=ENABLE_VNC_AUDIO=true
       Environment=DISPLAY=:0
       Environment=USER_LOCALES=en_US.UTF-8 UTF-8
+      Environment=UDEV=1
 
       # Port mappings
       # Web UI (noVNC)
