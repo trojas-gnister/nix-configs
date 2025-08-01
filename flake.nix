@@ -79,6 +79,7 @@
           ./modules/common/waybar.nix
           ./modules/common/mako.nix
 	 ./modules/common/wireguard.nix
+   ./modules/common/distrobox.nix
           ./modules/vms/vm-generator.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
@@ -91,17 +92,10 @@
               xdg.configFile = lib.mkMerge [
                 (import ./modules/common/podman-quadlet-volumes/ollama-data.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-volumes/open-webui-data.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-volumes/steamos-data.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-volumes/obsidian-config.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-volumes/steam-headless-config.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-definitions/ollama.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-definitions/openwebui.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/steamos.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/steam-headless.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/chromium.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
                 (import ./modules/common/podman-quadlet-definitions/obsidian.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/qbittorrentvpn.nix { inherit pkgs config lib; })
               ];
             };
           })
