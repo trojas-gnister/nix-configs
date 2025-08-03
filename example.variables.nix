@@ -60,11 +60,12 @@
     # --------------------------------------------------------------------
     # NETWORKING CONFIGURATION
     # Configure hostname and network interfaces for NAT forwarding
+    # NOTE: 'virbr0' is required as an internal interface for VM networking via libvirt's default bridge
     # --------------------------------------------------------------------
     networking = {
       hostname = "your-hostname";
       externalInterface = "enp6s0";  # Main network interface (ethernet/wifi)
-      internalInterfaces = [ "virbr0" ];  # Internal bridges (usually libvirt)
+      internalInterfaces = [ "virbr0" ];  # Internal bridges (required for VMs using libvirt NAT)
     };
 
     # --------------------------------------------------------------------
@@ -105,6 +106,7 @@
     # --------------------------------------------------------------------
     # FIREWALL CONFIGURATION
     # Define ports and interfaces for network access
+    # NOTE: Add 'virbr0' here if using VMs, as it allows DHCP responses and internal traffic for libvirt NAT
     # --------------------------------------------------------------------
     firewall = {
       openTCPPorts = [ 
@@ -127,7 +129,7 @@
       ];
       trustedInterfaces = [ 
         "wg0"    # WireGuard interface
-        # Add trusted network interfaces here
+        # Add trusted network interfaces here (e.g., "virbr0" for VM DHCP and traffic)
       ];
     };
 
@@ -144,6 +146,8 @@
     # 
     # For each VM, you must create a disk image first:
     # qemu-img create -f qcow2 /path/to/disk.qcow2 50G
+    #
+    # VMs use the 'virbr0' bridge for networking (NAT/DHCP provided by libvirt's default bridge)
     # --------------------------------------------------------------------
     vms = {
       "main-server" = {
@@ -152,6 +156,16 @@
         memorySize = 16;  # RAM in GB
         diskPath = "/var/lib/libvirt/images/main-server.qcow2";
         diskSize = 50;    # Disk size in GB (only used when creating new disk)
+        vcpuCount = 8;    # Number of vCPUs
+        
+        # CPU Pinning (matches lib/variables-module.nix: cpuPinning option)
+        # Example: Pin to host cores 8-15 (format: "8-15" or "2,3,6,7")
+        cpuPinning = "8-15";
+        
+        # GPU/PCI Passthrough (matches lib/variables-module.nix: pciDevices option)
+        # List full PCI addresses (e.g., from lspci -nn | grep VGA)
+        # Include all related functions (e.g., GPU + audio)
+        pciDevices = [ "0000:03:00.0" "0000:03:00.1" ];
         
         # IP Configuration - LEAVE AS null FOR NEW VMs
         ip = null;  # Set to null initially, update after discovering real IP
@@ -173,8 +187,14 @@
         memorySize = 8;
         diskPath = "/var/lib/libvirt/images/testing-vm.qcow2";
         diskSize = 32;
+        vcpuCount = 4;
         
-        # After installation workflow:
+        # CPU Pinning Example
+        cpuPinning = "4-7";
+        
+        # No PCI passthrough for this VM
+        pciDevices = [ ];
+        
         ip = "192.168.122.150";  # Update with actual DHCP IP after installation
         firstBoot = false;       # Set to false after successful installation
         isoName = null;          # Remove ISO after installation
@@ -193,6 +213,18 @@
         diskPath = "/var/lib/libvirt/images/old-vm.qcow2";
         # ... other settings don't matter when enable = false
       };
+    };
+
+    # --------------------------------------------------------------------
+    # VFIO CONFIGURATION (for PCI passthrough)
+    # Enable VFIO for GPU/PCI device isolation and passthrough to VMs
+    # Matches options in lib/variables-module.nix
+    # --------------------------------------------------------------------
+    vfio = {
+      enable = true;  # Set to true if using PCI passthrough
+      pciIds = [ "1002:747e" "1002:ab30" ];  # PCI device IDs (vendor:product) from lspci -nn
+      blacklistedDrivers = [ "amdgpu" "radeon" ];  # Drivers to blacklist
+      isolatedCores = "8-15";  # CPU cores to isolate (e.g., "8-15" or "2,3,6,7"); empty to disable
     };
 
     # --------------------------------------------------------------------
