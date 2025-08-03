@@ -1,10 +1,27 @@
+# Updated ./modules/vms/vm-generator.nix
+
 { config, lib, pkgs, NixVirt, customIsoImages, ... }:
-
 with lib;
-
 let
   # Imports the vm configurations from variables.nix
   cfg = config.variables.vms;
+  hexToInt = hex: let
+    hexMap = {
+      "0" = 0; "1" = 1; "2" = 2; "3" = 3; "4" = 4; "5" = 5; "6" = 6; "7" = 7; "8" = 8; "9" = 9;
+      "a" = 10; "b" = 11; "c" = 12; "d" = 13; "e" = 14; "f" = 15;
+      "A" = 10; "B" = 11; "C" = 12; "D" = 13; "E" = 14; "F" = 15;
+    };
+    lowerHex = lib.strings.toLower hex;
+  in builtins.foldl' (acc: c: acc * 16 + (hexMap.${c})) 0 (lib.strings.stringToCharacters lowerHex);
+  parsePCI = addr: let
+    parts = strings.splitString ":" addr;
+    slot_func = strings.splitString "." (elemAt parts 2);
+  in {
+    domain = hexToInt (elemAt parts 0);
+    bus = hexToInt (elemAt parts 1);
+    slot = hexToInt (elemAt slot_func 0);
+    function = hexToInt (elemAt slot_func 1);
+  };
 in
 {
   config = mkIf (cfg != {}) {
@@ -16,28 +33,43 @@ in
           finalIsoPath = if vm.firstBoot && vm.isoName != null
                           then "/var/lib/libvirt/images/${vm.isoName}.iso"
                           else null;
-
           # Defines the base configuration for a VM template.
           templateConfig = {
             inherit name;
             uuid = vm.uuid;
             memory = { count = vm.memorySize; unit = "GiB"; };
+            vcpu = { count = vm.vcpuCount; placement = "static"; };
             storage_vol = vm.diskPath;
             bridge_name = "virbr0";
             virtio_net = true;
           } // (lib.optionalAttrs (finalIsoPath != null) {
             install_vol = finalIsoPath;
           });
-
           # Creates the VM template using NixVirt.
           baseTemplate = NixVirt.lib.domain.templates.pc templateConfig;
-
-          # Removes graphical and audio devices for a headless server setup.
+          # Removes graphical and audio devices for a headless server setup, or for passthrough.
           headlessDevices = builtins.removeAttrs baseTemplate.devices [ "graphics" "video" "sound" "audio" "input" "channel" "redirdev" "hub" ];
+          # Add none video model for passthrough VMs.
+          passthroughDevices = headlessDevices // { video = [ { model.type = "none"; } ]; };
+          # Add hostdev for PCI passthrough if specified.
+          devicesWithHostdev = if (vm.pciDevices != []) then passthroughDevices // {
+            hostdev = map (addr: {
+              mode = "subsystem";
+              type = "pci";
+              managed = true;
+              source = { address = parsePCI addr; };
+            }) vm.pciDevices;
+          } else passthroughDevices;
           # Adds serial and console devices for terminal access.
-          finalDevices = headlessDevices // { serial = [ { type = "pty"; } ]; console = [ { type = "pty"; } ]; };
-          # Applies the device configuration to the final template.
-          finalConfig = baseTemplate // { devices = finalDevices; };
+          finalDevices = devicesWithHostdev // { serial = [ { type = "pty"; } ]; console = [ { type = "pty"; } ]; };
+          # Add cputune for pinning if specified.
+          cputuneConfig = if (vm.cpuPinning != "") then {
+            cputune = {
+              vcpupin = genList (i: { vcpu = i; cpuset = vm.cpuPinning; }) vm.vcpuCount;
+            };
+          } else {};
+          # Applies the device and cputune configuration to the final template.
+          finalConfig = baseTemplate // cputuneConfig // { devices = finalDevices; };
           # Writes the final configuration to an XML string.
           domainXML = NixVirt.lib.domain.writeXML finalConfig;
         in
@@ -46,7 +78,6 @@ in
           active = false;
         }
       ) (filterAttrs (n: v: v.enable) cfg);
-
     # Creates a helper script in /run/current-system/sw/bin for each VM
     # to provide easy console access via `virsh`.
     environment.systemPackages =
@@ -56,17 +87,14 @@ in
           virsh --connect qemu:///system console ${name}
         ''
       ) (filterAttrs (n: v: v.enable) cfg);
-
     # Opens TCP ports on the host firewall based on the ports defined for each VM.
     networking.firewall.allowedTCPPorts = let
       allVMTCPPorts = flatten (mapAttrsToList (_: vm: vm.firewall.openTCPPorts) (filterAttrs (_: vm: vm.enable) cfg));
     in allVMTCPPorts;
-
     # Opens UDP ports on the host firewall based on the ports defined for each VM.
     networking.firewall.allowedUDPPorts = let
       allVMUDPPorts = flatten (mapAttrsToList (_: vm: vm.firewall.openUDPPorts) (filterAttrs (_: vm: vm.enable) cfg));
     in allVMUDPPorts;
-
     # Injects custom iptables rules for advanced NAT and forwarding.
     networking.firewall.extraCommands = let
       externalIface = config.variables.networking.externalInterface;
@@ -95,11 +123,9 @@ in
       iptables -I FORWARD 1 -i virbr0 -o ${externalIface} -j ACCEPT
       # Inserts a rule to allow all traffic that is part of an established connection.
       iptables -I FORWARD 1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-
       # Concatenates and applies the rules generated by the genRules function for all VMs.
       ${lib.concatMapStringsSep "\n" genRules (lib.mapAttrsToList (name: vm: { inherit name vm; }) cfg)}
     '';
-
     # This script runs during system activation to prepare VM storage.
     system.activationScripts.setupVms =
       let
@@ -109,13 +135,11 @@ in
             echo "Creating new qcow2 disk for ${name} at ${vm.diskPath}"
             ${pkgs.qemu}/bin/qemu-img create -f qcow2 "${vm.diskPath}" ${toString vm.diskSize}G
           fi
-
           # Copies the specified installer ISO to the libvirt images directory if needed.
           ${lib.optionalString (vm.enable && vm.firstBoot && vm.isoName != null) ''
             echo "Processing ISO for VM: ${name}"
             src_iso_dir="${customIsoImages.${vm.isoName}}"
             destPath="/var/lib/libvirt/images/${vm.isoName}.iso"
-
             shopt -s nullglob
             iso_files=("$src_iso_dir"/iso/*.iso)
             if [ ''${#iso_files[@]} -ne 1 ]; then
@@ -123,7 +147,7 @@ in
               exit 1
             fi
             src_iso_path="''${iso_files[0]}"
-            
+          
             if [ ! -f "$destPath" ] || ! ${pkgs.diffutils}/bin/cmp -s "$src_iso_path" "$destPath"; then
               echo "Copying $src_iso_path to $destPath"
               cp "$src_iso_path" "$destPath"

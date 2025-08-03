@@ -2,65 +2,123 @@
 let
   # Extract values from NixOS config to pass to Home Manager
   hostname = config.variables.networking.hostname;
+  
+  # Script to set up the steam container after creation
+  setupSteamScript = pkgs.writeShellScriptBin "setup-steam-distrobox" ''
+    set -e
+    echo "Setting up Steam container..."
+    
+    # Ensure host export directories exist
+    mkdir -p "$HOME/.local/share/applications" "$HOME/.local/bin"
+    
+    # Check if container exists
+    if ! ${pkgs.distrobox}/bin/distrobox list | grep -q steam-arch; then
+      echo "Creating steam-arch container..."
+      ${pkgs.distrobox}/bin/distrobox assemble create --file $HOME/.config/distrobox/distrobox.ini
+    fi
+    
+    echo "Setting up multilib and installing Steam + Sunshine..."
+    
+    # Add multilib repository (idempotent)
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- sudo bash -c '
+      if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
+        echo "" >> /etc/pacman.conf
+        echo "[multilib]" >> /etc/pacman.conf
+        echo "Include = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
+      fi
+    '
+    
+    # Update package database
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- sudo pacman -Sy
+    
+    # Install Steam and gaming packages (official repos)
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- sudo pacman -S --needed --noconfirm steam lib32-mesa lib32-vulkan-radeon lib32-libglvnd lib32-openal ttf-liberation gamescope
+    
+    # Install yay AUR helper if not present (run as user)
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- bash -c '
+      if ! command -v yay &> /dev/null; then
+        git clone https://aur.archlinux.org/yay.git ~/yay-temp
+        cd ~/yay-temp
+        makepkg -si --noconfirm
+        cd ~
+        rm -rf yay-temp
+      fi
+    '
+    
+    # Install Sunshine from AUR (with CUDA disabled for AMD)
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- yay -S --noconfirm sunshine _use_cuda=false
+    
+    # Set permissions and capabilities in container
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- sudo usermod -aG video,input $USER
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- sudo setcap cap_sys_admin+ep /usr/bin/sunshine || echo "Note: setcap failed, Sunshine will use software encoding"
+    
+    # Export Steam (use --app for desktop integration)
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- env XDG_DATA_DIRS=/usr/share:/usr/local/share:$HOME/.local/share distrobox-export --app steam --delete || true
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- env XDG_DATA_DIRS=/usr/share:/usr/local/share:$HOME/.local/share distrobox-export --app steam
+    
+    # Export Sunshine (use --bin since no .desktop file)
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- env XDG_DATA_DIRS=/usr/share:/usr/local/share:$HOME/.local/share distrobox-export --bin /usr/bin/sunshine --delete || true
+    ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- env XDG_DATA_DIRS=/usr/share:/usr/local/share:$HOME/.local/share distrobox-export --bin /usr/bin/sunshine
+    
+    echo "Steam and Sunshine container setup completed!"
+    echo "You can now run 'steam' and 'sunshine' from your host system."
+    echo "Configure Sunshine at https://localhost:47990"
+  '';
 in
 {
-  # Install Distrobox as a user package (it wraps Podman)
+  # Install Distrobox and our setup script
   home-manager.users.${config.variables.user.name} = { config, lib, pkgs, ... }: {
-    home.packages = [ pkgs.distrobox ];
+    home.packages = [ 
+      pkgs.distrobox 
+      setupSteamScript
+    ];
+    
     # Generate distrobox.ini for declarative container management
     xdg.configFile."distrobox/distrobox.ini".text = ''
       [steam-arch]
       image=archlinux:latest
       init=true
-      # Enable multilib repository first
-      init_hooks=sed -i "/\[multilib\]/,/Include/s/^#//" /etc/pacman.conf
-      # Install Steam and dependencies for AMD GPU/gaming
-      additional_packages=steam gamescope vulkan-radeon lib32-vulkan-radeon mesa lib32-mesa lib32-libglvnd ttf-liberation lib32-openal base-devel git
+      additional_packages=base-devel git
       pull=true
       replace=true
       nvidia=false
       root=false
+      additional_flags=--device /dev/dri:/dev/dri --device /dev/uinput:/dev/uinput --device /dev/input:/dev/input --group-add 988  # GPU and input passthrough with container-devices group (988)
     '';
-    # Generate basic sunshine.conf with AMD-specific settings (shared via mounted home)
+    
+    # Generate basic sunshine.conf with AMD-specific settings
     xdg.configFile."sunshine/sunshine.conf".text = ''
       # Basic Sunshine config for AMD GPU streaming
       sunshine_name = ${hostname}-container
       min_log_level = info
       encoder = amf  # Use AMF for AMD GPU encoding
-      adapter_name = /dev/dri/renderD128  # AMD render node (adjust if needed; Distrobox mounts /dev/dri)
-      bitrate = 50000  # 50 Mbps default; adjust for quality/bandwidth
+      adapter_name = /dev/dri/renderD128  # AMD render node
+      bitrate = 50000  # 50 Mbps default
       port = 47989  # Default HTTPS port
       upnp = on  # Enable UPnP for auto port mapping
-      # Add more options as needed (e.g., av1_mode = 1 for AV1 if supported)
     '';
-    # Activation script: Assemble container, export Steam, enable/start Sunshine service
-    home.activation.setupDistrobox = config.lib.dag.entryAfter ["writeBoundary"] ''
-      # Ensure podman is in PATH
-      export PATH="${pkgs.podman}/bin:$PATH"
-      
-      # Create the container first
-      $DRY_RUN_CMD ${pkgs.distrobox}/bin/distrobox assemble create --replace --file $HOME/.config/distrobox/distrobox.ini
-      
-      if [ -z "$DRY_RUN_CMD" ]; then
-        # Only run post-setup if not in dry-run mode
-        echo "Setting up AUR helper and Sunshine..."
-        
-        # Install paru AUR helper
-        $DRY_RUN_CMD ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- bash -c "
-          git clone https://aur.archlinux.org/paru.git /tmp/paru && 
-          cd /tmp/paru && 
-          makepkg -si --noconfirm
-        " || echo "Failed to install paru, continuing..."
-        
-        # Install Sunshine via AUR
-        $DRY_RUN_CMD ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- paru -S --noconfirm sunshine || echo "Failed to install sunshine, continuing..."
-        
-        # Export Steam as a desktop entry (deletes first to clean up any changes)
-        $DRY_RUN_CMD ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- distrobox-export --app steam --delete || true
-        $DRY_RUN_CMD ${pkgs.distrobox}/bin/distrobox enter -n steam-arch -- distrobox-export --app steam || echo "Failed to export Steam, continuing..."
-        
-        echo "Distrobox setup completed!"
-      fi
-    '';
+
+    # Systemd user service for Sunshine (auto-start on graphical session)
+    systemd.user.services.sunshine = {
+      Unit = {
+        Description = "Sunshine self-hosted game stream host for Moonlight";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Install = {
+        WantedBy = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${config.home.homeDirectory}/.local/bin/sunshine";
+        Restart = "on-failure";
+        RestartSec = "10s";
+        Environment = [
+          "PATH=/run/current-system/sw/bin:/usr/bin:/bin:${config.home.homeDirectory}/.local/bin"
+          "XDG_RUNTIME_DIR=%i"
+          "WAYLAND_DISPLAY=wayland-1"
+          "DISPLAY=:0"
+        ];
+      };
+    };
   };
 }

@@ -4,7 +4,7 @@
   home-manager.users.${config.variables.user.name} = { pkgs, ... }: {
     programs.waybar = {
       enable = true;
-      package = pkgs.waybar.override { swaySupport = true; };
+      # package = pkgs.waybar.override { swaySupport = true; };  # Removed: invalid in current nixpkgs
       settings = {
         mainBar = {
           layer = "top";

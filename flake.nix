@@ -2,9 +2,9 @@
   description = "NixOS configurations for PC and Steam Deck";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/a79cfe0ebd24952b580b1cf08cd906354996d547";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/5af1b9a0f193ab6138b89a8e0af8763c21bbf491";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     NixVirt.url = "https://flakehub.com/f/AshleyYakeley/NixVirt/*.tar.gz";
@@ -60,11 +60,6 @@
           ./hosts/pc.nix
           home-manager.nixosModules.home-manager
           NixVirt.nixosModules.default
-          ({ pkgs, ... }: {
-            nixpkgs.overlays = [(final: prev: {
-              gs-launcher = self.packages.${pkgs.system}.gs-launcher;
-            })];
-          })
           ./modules/common/user.nix
           ./modules/common/networking.nix
           ./modules/common/audio.nix
@@ -78,9 +73,11 @@
           ./modules/common/sway.nix
           ./modules/common/waybar.nix
           ./modules/common/mako.nix
-	 ./modules/common/wireguard.nix
-   ./modules/common/distrobox.nix
+	  ./modules/common/wireguard.nix
           ./modules/vms/vm-generator.nix
+# 	  ({ lib, ... }: {
+#   security.lsm = lib.mkForce [];
+# })
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
               dconf.settings = {
@@ -89,16 +86,8 @@
                   uris = [ "qemu:///system" ];
                 };
               };
-              xdg.configFile = lib.mkMerge [
-                (import ./modules/common/podman-quadlet-volumes/ollama-data.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-volumes/open-webui-data.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-volumes/obsidian-config.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/ollama.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/openwebui.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/obsidian.nix { inherit pkgs config lib; })
-              ];
-            };
-          })
+	      };
+	      })
         ];
       };
 
@@ -129,12 +118,6 @@
           ./modules/common/mako.nix
           ./modules/common/virtualisation.nix
           ./modules/vms/vm-generator.nix
-          ({ config, lib, pkgs, ... }: {
-            home-manager.users.${config.variables.user.name}.xdg.configFile = lib.mkMerge [
-              (import ./modules/common/podman-quadlet-definitions/librewolf.nix { inherit pkgs config lib; })
-              (import ./modules/common/podman-quadlet-definitions/chromium.nix { inherit pkgs config lib; })
-            ];
-          })
         ];
       };
 
@@ -191,7 +174,45 @@
     })
              ];
       };
-
+   blackspace = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit self; };
+        modules = [
+          ./hardware-configuration.nix
+          ./variables.nix
+          ./hosts/gamingserver.nix
+          home-manager.nixosModules.home-manager
+          ({ pkgs, ... }: {
+            nixpkgs.overlays = [(final: prev: {
+              gs-launcher = self.packages.${pkgs.system}.gs-launcher;
+            })];
+          })
+          ./modules/common/unfree.nix
+          ./modules/common/user.nix
+          ./modules/common/networking.nix
+          ./modules/common/audio.nix
+          ./modules/common/firewall.nix
+          ./modules/common/graphics.nix
+          ./modules/common/ssh.nix
+          ./modules/common/system-packages.nix
+          ./modules/common/podman.nix
+          ./modules/common/home-manager.nix
+          ./modules/common/hyprland.nix
+          ./modules/common/waybar.nix
+          ./modules/common/mako.nix
+          ./modules/common/sunshine.nix
+          ({ config, lib, pkgs, ... }: {
+            home-manager.users.${config.variables.user.name} = {
+              xdg.configFile = lib.mkMerge [
+                (import ./modules/common/podman-quadlet-volumes/ollama-data.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-volumes/open-webui-data.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/ollama.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/openwebui.nix { inherit pkgs config lib; })
+              ];
+            };
+          })
+        ];
+      };
       browserspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit self; };

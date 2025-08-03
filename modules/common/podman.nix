@@ -1,10 +1,10 @@
-# modules/common/podman.nix
 { config, lib, pkgs, ... }:
 
 {
   virtualisation.podman = {
     enable = true;
     dockerCompat = false;
+    dockerSocket.enable = true;
     defaultNetwork.settings.dns_enabled = true;
   };
 
@@ -12,10 +12,14 @@
   environment.etc."systemd/user-generators/podman-user-generator" = {
     source = "${pkgs.podman}/lib/systemd/user-generators/podman-user-generator";
   };
-  
-  # Enable user lingering for the primary user so services start on boot
-  users.users.${config.variables.user.name}.linger = true;
-  
+
+  # Enable uinput for virtual input devices (gamepads)
+  boot.kernelModules = [ "uinput" ];
+  services.udev.extraRules = ''
+    KERNEL=="uinput", SUBSYSTEM=="misc", MODE="0660", GROUP="input"
+  '';
+  users.users.${config.variables.user.name}.extraGroups = [ "input" ];
+
   # Make sure network-online.target is properly handled for user services
   systemd.user.services.podman-user-wait-network-online = {
     description = "Wait for system level network-online.target";

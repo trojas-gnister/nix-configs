@@ -82,6 +82,23 @@ in {
             };
             default = {};
           };
+          vcpuCount = mkOption {
+            type = types.int;
+            default = 4;
+            description = "Number of vCPUs for the VM.";
+          };
+          pciDevices = mkOption {
+            type = types.listOf types.str;
+            default = [];
+            example = [ "0000:03:00.0" "0000:03:00.1" ];
+            description = "Full PCI addresses to passthrough (e.g., '0000:03:00.0').";
+          };
+          cpuPinning = mkOption {
+            type = types.str;
+            default = "";
+            example = "8-23";
+            description = "CPU pinning range for vCPUs (e.g., '8-23').";
+          };
         };
       }));
       default = {};
@@ -143,6 +160,27 @@ in {
     type = types.str;
     default = "";
   };
+    };
+    vfio = {
+      enable = mkEnableOption "VFIO PCI passthrough setup";
+      pciIds = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = [ "10de:1c03" "10de:10f1" ];
+        description = "PCI device IDs to bind to VFIO (format: vendor:product). Include all functions (e.g., GPU video + audio).";
+      };
+      blacklistedDrivers = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = [ "nouveau" "nvidia" "nvidiafb" "nvidia_drm" ];
+        description = "Kernel modules to blacklist to prevent them from claiming the passthrough devices.";
+      };
+      isolatedCores = mkOption {
+        type = types.str;
+        default = "";
+        example = "4-7";
+        description = "CPU cores to isolate for VFIO use (format for isolcpus kernel param, e.g., '4-7' or '2,3,6,7'). Leave empty to disable.";
+      };
     };
   };
 }
