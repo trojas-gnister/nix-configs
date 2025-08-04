@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 {
   networking.firewall = {
-    enable = true;
+    enable = false;
     allowedTCPPorts = config.variables.firewall.openTCPPorts;
     allowedUDPPorts = config.variables.firewall.openUDPPorts;
     allowedTCPPortRanges = config.variables.firewall.openTCPPortRanges;

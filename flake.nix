@@ -75,8 +75,10 @@
           ./modules/common/mako.nix
 	  ./modules/common/wireguard.nix
           ./modules/vms/vm-generator.nix
+	  ./modules/vms/nat.nix
+	  ./modules/vms/proxy.nix
 # 	  ({ lib, ... }: {
-#   security.lsm = lib.mkForce [];
+#	   security.lsm = lib.mkForce [];
 # })
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {

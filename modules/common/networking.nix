@@ -13,14 +13,6 @@
     internalInterfaces = config.variables.networking.internalInterfaces;  # e.g., [ "virbr0" ]
   };
 
-  # Enable IP forwarding and disable reverse path filtering
-  boot.kernel.sysctl = {
-    "net.ipv4.ip_forward" = 1;
-    "net.ipv4.conf.all.forwarding" = 1;
-    "net.ipv4.conf.${config.variables.networking.externalInterface}.rp_filter" = 0;
-    "net.ipv4.conf.virbr0.rp_filter" = 0;
-  };
-
   # Define rt_tables for policy routing
   environment.etc."iproute2/rt_tables".text = lib.mkDefault ''
     200 localhairpin
