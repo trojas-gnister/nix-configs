@@ -1,34 +1,77 @@
 ### ./modules/common/hyprland.nix
 
 { config, lib, pkgs, inputs ? {}, ... }:
+let
+  # Custom blur lock script
+  blur-lock = pkgs.writeShellScriptBin "blur-lock" ''
+    #!${pkgs.bash}/bin/bash
+    set -euo pipefail
+
+    # Temporary file for the blurred screenshot
+    TEMP_IMAGE="/tmp/lockscreen_blur.png"
+
+    # Take screenshot of all outputs
+    ${pkgs.grim}/bin/grim "$TEMP_IMAGE"
+
+    # Blur the screenshot
+    ${pkgs.imagemagick}/bin/convert "$TEMP_IMAGE" -blur 0x8 "$TEMP_IMAGE"
+
+    # Lock screen with blurred image
+    ${pkgs.swaylock}/bin/swaylock \
+      --image "$TEMP_IMAGE" \
+      --scaling fill \
+      --color 1e1e2e \
+      --inside-color 1e1e2e88 \
+      --ring-color 6272a4 \
+      --key-hl-color 50fa7b \
+      --bs-hl-color ff5555 \
+      --text-color f8f8f2 \
+      --ignore-empty-password \
+      --show-failed-attempts
+
+    # Clean up temporary file
+    rm -f "$TEMP_IMAGE"
+  '';
+in
 {
   services.xserver = {
     enable = true;
   };
 
-  services.displayManager.autoLogin = {
-    enable = true;
-    user = config.variables.user.name;
+  # Configure display manager with proper session handling
+  services.displayManager = {
+    sddm = {
+      enable = true;
+      wayland.enable = true;
+    };
+    autoLogin = {
+      enable = true;
+      user = config.variables.user.name;
+    };
+    defaultSession = "hyprland";
   };
 
-  services.displayManager.sddm.enable = true;
-
+  # Enable Hyprland with proper session registration
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
   };
 
+  # Required packages for Hyprland ecosystem
   environment.systemPackages = with pkgs; [
     kitty
     waybar
     wvkbd
     wofi
     swaylock
+    swayidle
     hyprpaper
     libinput
     grim
     slurp
     wl-clipboard
+    imagemagick  # For wallpaper processing
+    blur-lock    # Custom blur lock script
   ];
 
   users.users.${config.variables.user.name}.extraGroups = [ "input" ];
@@ -115,8 +158,8 @@
         ];
 
         "exec-once" = [
-          "waybar"
-          "hyprpaper"
+          # Auto-lock configuration with 10 minute timeout using blur-lock
+          "swayidle -w timeout 600 'blur-lock' timeout 900 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on' before-sleep 'blur-lock'"
         ];
 
         bind = [
@@ -179,13 +222,32 @@
           ", XF86AudioPrev, exec, playerctl previous"
           ", Print, exec, grim -g \"$(slurp)\" - | wl-copy"
           "SHIFT, Print, exec, grim - | wl-copy"
-          "$mainMod, x, exec, swaylock"
+          "$mainMod, x, exec, blur-lock"
           ", F1, exec, brightnessctl set 5%-"
           ", F2, exec, brightnessctl set +5%"
           ", F10, exec, pactl set-sink-mute @DEFAULT_SINK@ toggle"
           ", F11, exec, pactl set-sink-volume @DEFAULT_SINK@ -5%"
           ", F12, exec, pactl set-sink-volume @DEFAULT_SINK@ +5%"
           "$mainMod, B, exec, kbd-backlight-toggle"
+        ];
+      };
+    };
+
+    # Configure hyprpaper for wallpaper
+    services.hyprpaper = {
+      enable = true;
+      settings = {
+        ipc = "on";
+        splash = false;
+        splash_offset = 2.0;
+        
+        preload = [
+          "${config.variables.wallpaper.path}"
+        ];
+        
+        wallpaper = [
+          "eDP-1,${config.variables.wallpaper.path}"
+          ",${config.variables.wallpaper.path}"  # Fallback for any monitor
         ];
       };
     };

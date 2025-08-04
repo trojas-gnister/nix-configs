@@ -147,6 +147,7 @@
           ./modules/common/bluetooth.nix
           ./modules/common/neovim.nix
           ./modules/common/mako.nix
+	  ./modules/common/wireguard.nix 
         ];
       };
       krawlspace = nixpkgs.lib.nixosSystem {
