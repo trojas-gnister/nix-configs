@@ -21,8 +21,12 @@ in {
         type = types.listOf types.str;
         default = [];
       };
-    };
-    
+      flatpak = mkOption {
+	type = types.listOf types.str;
+	default = [];
+      };
+};
+   
     # Steam Deck specific configuration options
     steamdeck = {
       handheld = {
@@ -49,7 +53,7 @@ in {
         };
       };
     };
-    
+   
     # Virtual machine configuration
     vms = mkOption {
       type = types.attrsOf (types.submodule ({ name, ... }: {
@@ -112,26 +116,12 @@ in {
             default = 4;
             description = "Number of vCPUs for the VM.";
           };
-          # PCI devices for passthrough
-          pciDevices = mkOption {
-            type = types.listOf types.str;
-            default = [];
-            example = [ "0000:03:00.0" "0000:03:00.1" ];
-            description = "Full PCI addresses to passthrough (e.g., '0000:03:00.0').";
-          };
-          # CPU pinning configuration
-          cpuPinning = mkOption {
-            type = types.str;
-            default = "";
-            example = "8-23";
-            description = "CPU pinning range for vCPUs (e.g., '8-23').";
-          };
         };
       }));
       default = {};
       description = "Declarative definition of virtual machines.";
     };
-    
+   
     # Network configuration options
     networking = {
       # System hostname
@@ -149,7 +139,7 @@ in {
         description = "List of internal network interfaces for NAT (e.g., [ 'virbr0' ] for libvirt bridge).";
       };
     };
-    
+   
     # SSH configuration
     ssh = {
       initrd = {
@@ -161,7 +151,7 @@ in {
         authorizedKeys = mkOption { type = types.listOf types.str; default = []; };
       };
     };
-    
+   
     # User account configuration
     user = {
       # Username for the primary user
@@ -171,7 +161,7 @@ in {
       # Groups the user should belong to
       groups = mkOption { type = types.listOf types.str; default = [ "wheel" "audio" ]; };
     };
-    
+   
     # Firewall configuration
     firewall = {
       # Individual TCP ports to open
@@ -204,7 +194,7 @@ in {
         default = [];
       };
     };
-    
+   
     # WireGuard VPN configuration
     wireguard = {
       # Path to WireGuard client configuration file
@@ -213,34 +203,7 @@ in {
         default = "";
       };
     };
-    
-    # VFIO PCI passthrough configuration
-    vfio = {
-      # Enable VFIO support
-      enable = mkEnableOption "VFIO PCI passthrough setup";
-      # PCI device IDs to bind to VFIO driver
-      pciIds = mkOption {
-        type = types.listOf types.str;
-        default = [];
-        example = [ "10de:1c03" "10de:10f1" ];
-        description = "PCI device IDs to bind to VFIO (format: vendor:product). Include all functions (e.g., GPU video + audio).";
-      };
-      # Kernel modules to prevent from loading
-      blacklistedDrivers = mkOption {
-        type = types.listOf types.str;
-        default = [];
-        example = [ "nouveau" "nvidia" "nvidiafb" "nvidia_drm" ];
-        description = "Kernel modules to blacklist to prevent them from claiming the passthrough devices.";
-      };
-      # CPU cores to isolate for VM use
-      isolatedCores = mkOption {
-        type = types.str;
-        default = "";
-        example = "4-7";
-        description = "CPU cores to isolate for VFIO use (format for isolcpus kernel param, e.g., '4-7' or '2,3,6,7'). Leave empty to disable.";
-      };
-    };
-    
+   
     # Wallpaper configuration
     wallpaper = {
       # Path to wallpaper image file

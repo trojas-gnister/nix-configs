@@ -10,13 +10,9 @@
     NixVirt.url = "https://flakehub.com/f/AshleyYakeley/NixVirt/*.tar.gz";
     NixVirt.inputs.nixpkgs.follows = "nixpkgs";
 
-    jovian = {
-      url = "github:Jovian-Experiments/Jovian-NixOS";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, nixpkgs, NixVirt, home-manager, jovian, ... }@inputs:
+  outputs = { self, nixpkgs, NixVirt, home-manager, ... }@inputs:
   let
     allSystems = [ "x86_64-linux" ];
     forAllSystems = nixpkgs.lib.genAttrs allSystems;
@@ -61,6 +57,7 @@
           home-manager.nixosModules.home-manager
           NixVirt.nixosModules.default
           ./modules/common/user.nix
+	  ./modules/common/flatpak.nix
           ./modules/common/networking.nix
           ./modules/common/audio.nix
           ./modules/common/firewall.nix
@@ -69,17 +66,28 @@
           ./modules/common/system-packages.nix
           ./modules/common/podman.nix
           ./modules/common/home-manager.nix
+          ./modules/common/steam.nix
+          ./modules/common/unfree.nix
           ./modules/common/virtualisation.nix
-          ./modules/common/sway.nix
+          ./modules/common/hyprland.nix
           ./modules/common/waybar.nix
           ./modules/common/mako.nix
 	  ./modules/common/wireguard.nix
           ./modules/vms/vm-generator.nix
 	  ./modules/vms/nat.nix
 	  ./modules/vms/proxy.nix
-# 	  ({ lib, ... }: {
-#	   security.lsm = lib.mkForce [];
-# })
+          ./modules/common/sunshine.nix
+
+          ({ config, lib, pkgs, ... }: {
+            home-manager.users.${config.variables.user.name} = {
+              xdg.configFile = lib.mkMerge [
+                (import ./modules/common/podman-quadlet-volumes/ollama-data.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-volumes/open-webui-data.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/ollama.nix { inherit pkgs config lib; })
+                (import ./modules/common/podman-quadlet-definitions/openwebui.nix { inherit pkgs config lib; })
+              ];
+            };
+          })
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
               dconf.settings = {
@@ -90,36 +98,6 @@
               };
 	      };
 	      })
-        ];
-      };
-
-      leviathan = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit self NixVirt customIsoImages jovian; };
-        modules = [
-          ./hardware-configuration.nix
-          ./variables.nix
-          ./hosts/steamdeck.nix
-          home-manager.nixosModules.home-manager
-          NixVirt.nixosModules.default
-          jovian.nixosModules.default
-          ./modules/common/unfree.nix
-          ./modules/common/user.nix
-          ./modules/common/networking.nix
-          ./modules/common/audio.nix
-          ./modules/common/firewall.nix
-          ./modules/common/graphics.nix
-          ./modules/common/ssh.nix
-          ./modules/common/system-packages.nix
-          ./modules/common/podman.nix
-          ./modules/common/home-manager.nix
-          ./modules/common/sway.nix
-          ./modules/common/waybar.nix
-          ./modules/common/bluetooth.nix
-          ./modules/common/neovim.nix
-          ./modules/common/mako.nix
-          ./modules/common/virtualisation.nix
-          ./modules/vms/vm-generator.nix
         ];
       };
 
@@ -134,6 +112,7 @@
           home-manager.nixosModules.home-manager
           NixVirt.nixosModules.default
           ./modules/common/unfree.nix
+	  ./modules/common/flatpak.nix
           ./modules/common/user.nix
           ./modules/common/networking.nix
           ./modules/common/audio.nix
@@ -145,7 +124,6 @@
           ./modules/common/hyprland.nix
           ./modules/common/waybar.nix
           ./modules/common/bluetooth.nix
-          ./modules/common/neovim.nix
           ./modules/common/mako.nix
 	  ./modules/common/wireguard.nix 
         ];
@@ -166,7 +144,6 @@
           ./modules/common/system-packages.nix
           ./modules/common/home-manager.nix
           ./modules/common/bluetooth.nix
-          ./modules/common/neovim.nix
           ./modules/common/podman.nix
           ({ config, lib, pkgs, ... }: {
       home-manager.users.${config.variables.user.name} = {
@@ -177,45 +154,7 @@
     })
              ];
       };
-   blackspace = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit self; };
-        modules = [
-          ./hardware-configuration.nix
-          ./variables.nix
-          ./hosts/gamingserver.nix
-          home-manager.nixosModules.home-manager
-          ({ pkgs, ... }: {
-            nixpkgs.overlays = [(final: prev: {
-              gs-launcher = self.packages.${pkgs.system}.gs-launcher;
-            })];
-          })
-          ./modules/common/unfree.nix
-          ./modules/common/user.nix
-          ./modules/common/networking.nix
-          ./modules/common/audio.nix
-          ./modules/common/firewall.nix
-          ./modules/common/graphics.nix
-          ./modules/common/ssh.nix
-          ./modules/common/system-packages.nix
-          ./modules/common/podman.nix
-          ./modules/common/home-manager.nix
-          ./modules/common/hyprland.nix
-          ./modules/common/waybar.nix
-          ./modules/common/mako.nix
-          ./modules/common/sunshine.nix
-          ({ config, lib, pkgs, ... }: {
-            home-manager.users.${config.variables.user.name} = {
-              xdg.configFile = lib.mkMerge [
-                (import ./modules/common/podman-quadlet-volumes/ollama-data.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-volumes/open-webui-data.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/ollama.nix { inherit pkgs config lib; })
-                (import ./modules/common/podman-quadlet-definitions/openwebui.nix { inherit pkgs config lib; })
-              ];
-            };
-          })
-        ];
-      };
+
       browserspace = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit self; };
@@ -232,7 +171,6 @@
           ./modules/common/system-packages.nix
           ./modules/common/home-manager.nix
           ./modules/common/bluetooth.nix
-          ./modules/common/neovim.nix
           ./modules/common/podman.nix
           ({ config, lib, pkgs, ... }: {
             home-manager.users.${config.variables.user.name} = {
